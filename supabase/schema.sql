@@ -152,3 +152,17 @@ create policy "owners can read their summaries"
   on weekly_summaries for select
   to authenticated
   using (business_id in (select accessible_business_ids()));
+
+-- ============================================================
+-- Storage: bucket público para logos de negocios
+-- (lo sube el panel superadmin; lo muestra la landing anónima)
+-- ============================================================
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('logos', 'logos', true, 2097152,
+        array['image/png','image/jpeg','image/webp','image/svg+xml'])
+on conflict (id) do update set public = true;
+
+drop policy if exists "public read logos" on storage.objects;
+create policy "public read logos" on storage.objects
+  for select to anon, authenticated
+  using (bucket_id = 'logos');
