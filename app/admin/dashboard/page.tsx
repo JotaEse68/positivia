@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { currentUser } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { supabaseAdmin } from "@/lib/supabase";
 import AdminStatsCard from "@/components/AdminStatsCard";
 import ComplaintList from "@/components/ComplaintList";
 
@@ -13,11 +15,37 @@ type Business = {
   parent_business_id: string | null;
 };
 
+async function linkBusinessesForCurrentUser() {
+  const user = await currentUser();
+  const email = user?.emailAddresses?.[0]?.emailAddress?.trim();
+  if (!user?.id || !email) return;
+
+  const admin = supabaseAdmin();
+  const { data: matches, error } = await admin
+    .from("businesses")
+    .select("id")
+    .ilike("email_owner", email);
+
+  if (error || !matches?.length) return;
+
+  await admin.from("admin_users").upsert(
+    matches.map((business) => ({
+      business_id: business.id,
+      clerk_user_id: user.id,
+      role: "owner",
+    })),
+    { onConflict: "business_id,clerk_user_id" }
+  );
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { b?: string };
+  searchParams: Promise<{ b?: string }>;
 }) {
+  await linkBusinessesForCurrentUser();
+  const query = await searchParams;
+
   const supabase = createServerSupabase();
 
   // Negocios accesibles (RLS: los del dueño + sus locales hijos).
@@ -33,15 +61,19 @@ export default async function DashboardPage({
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-neutral-900">Aún no tienes negocios</h1>
         <p className="mt-2 text-neutral-500">
-          Tu cuenta todavía no está vinculada a ningún negocio. Contacta con
-          PositivIA para darte de alta.
+          Tu cuenta todavía no está vinculada a ningún negocio. Si te acaban de
+          invitar, revisa que hayas entrado con el mismo email configurado en tu
+          ficha de cliente.
         </p>
+        <Link href="/demo/dashboard" className="mt-5 inline-block text-green-600 underline">
+          Ver demo del panel
+        </Link>
       </main>
     );
   }
 
   const selected =
-    list.find((b) => b.id === searchParams.b) ?? list[0];
+    list.find((b) => b.id === query.b) ?? list[0];
   const isPro = selected.plan === "pro";
 
   // Feedback del negocio seleccionado (RLS-scoped).

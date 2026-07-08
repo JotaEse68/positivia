@@ -3,6 +3,9 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { anthropicConfigured, summarizeWeek } from "@/lib/anthropic";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { sendEmail } from "@/lib/email";
+import { isAuthorizedCronRequest } from "@/lib/cron";
+import { escapeHtml } from "@/lib/html";
+import { recordNotificationEvent } from "@/lib/notification-events";
 
 // Genera el resumen semanal de un negocio (solo Pro): analiza el feedback de
 // los últimos 7 días, lo guarda en weekly_summaries y lo envía por
@@ -10,6 +13,10 @@ import { sendEmail } from "@/lib/email";
 // el dashboard o por un job programado.
 export async function POST(req: NextRequest) {
   try {
+    if (!isAuthorizedCronRequest(req)) {
+      return NextResponse.json({ error: "no_autorizado" }, { status: 401 });
+    }
+
     const body = await req.json().catch(() => null);
     const businessId = typeof body?.businessId === "string" ? body.businessId : null;
     if (!businessId) {
@@ -80,25 +87,39 @@ export async function POST(req: NextRequest) {
       `${subject}\n\n${summary}\n\n` +
       `✅ Reseñas positivas: ${positive}\n⚠️ Quejas privadas: ${negativeCount}` +
       (topTheme ? `\n🔁 Tema recurrente: ${topTheme}` : "");
+    const safeBusinessName = escapeHtml(business.name);
+    const safeSummary = escapeHtml(summary);
+    const safeTopTheme = topTheme ? escapeHtml(topTheme) : null;
     const html =
       `<div style="font-family:system-ui,sans-serif;max-width:520px">` +
       `<h2 style="margin:0 0 8px">📊 Resumen semanal</h2>` +
-      `<p style="margin:0 0 8px"><strong>${business.name}</strong></p>` +
-      `<p style="margin:8px 0;padding:12px;background:#f9fafb;border-radius:8px">${summary}</p>` +
+      `<p style="margin:0 0 8px"><strong>${safeBusinessName}</strong></p>` +
+      `<p style="margin:8px 0;padding:12px;background:#f9fafb;border-radius:8px">${safeSummary}</p>` +
       `<p style="margin:4px 0">✅ Reseñas positivas: <strong>${positive}</strong></p>` +
       `<p style="margin:4px 0">⚠️ Quejas privadas: <strong>${negativeCount}</strong></p>` +
-      (topTheme ? `<p style="margin:4px 0">🔁 Tema recurrente: <strong>${topTheme}</strong></p>` : "") +
+      (safeTopTheme ? `<p style="margin:4px 0">🔁 Tema recurrente: <strong>${safeTopTheme}</strong></p>` : "") +
       `</div>`;
 
     let channel: string | null = null;
+    let error: string | undefined;
     if (business.whatsapp_owner) {
       const wa = await sendWhatsApp(business.whatsapp_owner, text);
       if (wa.sent) channel = "whatsapp";
+      else error = wa.error;
     }
     if (!channel && business.email_owner) {
       const mail = await sendEmail(business.email_owner, subject, html);
       if (mail.sent) channel = "email";
+      else error = mail.error ?? error;
     }
+
+    await recordNotificationEvent(supabase, {
+      businessId: business.id,
+      eventType: "weekly_summary",
+      channel: channel ? (channel as "whatsapp" | "email") : "none",
+      status: channel ? "sent" : "failed",
+      error: channel ? null : error ?? "no_channel_configured",
+    });
 
     return NextResponse.json({
       ok: true,

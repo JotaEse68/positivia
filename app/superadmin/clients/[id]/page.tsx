@@ -12,17 +12,18 @@ export const dynamic = "force-dynamic";
 export default async function ClientDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const su = await getSuperadmin();
   if (!su) notFound();
+  const { id } = await params;
 
   const { data: b } = await supabaseAdmin()
     .from("businesses")
     .select(
       "id, name, slug, plan, plan_status, logo_url, color_primary, google_review_link, whatsapp_owner, email_owner, parent_business_id"
     )
-    .eq("slug", params.id)
+    .eq("slug", id)
     .maybeSingle();
 
   if (!b) notFound();

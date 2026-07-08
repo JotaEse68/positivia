@@ -83,6 +83,27 @@ create table weekly_summaries (
 
 create index idx_weekly_summaries_business on weekly_summaries (business_id, week_start desc);
 
+-- ---------- notification_events ----------
+-- Registro operativo de alertas enviadas o fallidas. Ayuda a responder
+-- incidencias de entrega sin depender solo de logs efímeros de Vercel.
+create table notification_events (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references businesses(id) on delete cascade,
+  feedback_id uuid references feedback(id) on delete set null,
+  event_type text not null check (event_type in ('complaint_alert', 'weekly_summary')),
+  channel text not null check (channel in ('whatsapp', 'email', 'none')),
+  status text not null check (status in ('sent', 'failed', 'skipped')),
+  error text,
+  sent_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index idx_notification_events_business_created
+  on notification_events (business_id, created_at desc);
+create index idx_notification_events_feedback
+  on notification_events (feedback_id)
+  where feedback_id is not null;
+
 -- ============================================================
 -- Row Level Security
 --
@@ -101,6 +122,7 @@ alter table businesses enable row level security;
 alter table feedback enable row level security;
 alter table admin_users enable row level security;
 alter table weekly_summaries enable row level security;
+alter table notification_events enable row level security;
 
 -- Negocios a los que el usuario autenticado tiene acceso:
 -- los suyos directos + los locales hijos de los suyos.
@@ -152,6 +174,12 @@ create policy "users can read own admin rows"
 -- (el job semanal corre server-side).
 create policy "owners can read their summaries"
   on weekly_summaries for select
+  to authenticated
+  using (business_id in (select accessible_business_ids()));
+
+-- notification_events: solo lectura para dueños. Escritura vía service role.
+create policy "owners can read their notification events"
+  on notification_events for select
   to authenticated
   using (business_id in (select accessible_business_ids()));
 

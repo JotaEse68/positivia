@@ -100,6 +100,13 @@ export default function Home() {
                 Entrar al panel
               </Link>
               <Link
+                href="/r/demo-restaurante"
+                className="rounded-full px-6 py-3 font-semibold transition-transform active:scale-95"
+                style={{ backgroundColor: C.gold, color: "#241605" }}
+              >
+                Probar QR demo
+              </Link>
+              <Link
                 href="#como"
                 className="rounded-full border px-6 py-3 font-semibold transition-colors hover:bg-white/5"
                 style={{ borderColor: "rgba(255,255,255,0.2)", color: C.paper }}
@@ -309,6 +316,13 @@ export default function Home() {
               style={{ backgroundColor: C.ink }}
             >
               Entrar a mi panel
+            </Link>
+            <Link
+              href="/demo/dashboard"
+              className="ml-3 mt-6 inline-block rounded-full border px-6 py-3 font-semibold transition-transform active:scale-95"
+              style={{ borderColor: C.ink, color: C.ink }}
+            >
+              Ver demo
             </Link>
           </div>
           <div

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { getDemoBusiness } from "@/lib/demo";
 import { supabaseAnon } from "@/lib/supabase";
 import RatingStars from "@/components/RatingStars";
 
@@ -7,9 +8,12 @@ import RatingStars from "@/components/RatingStars";
 // cargar rápido. Server component, sin JS innecesario.
 export const revalidate = 60;
 
-type Props = { params: { slug: string } };
+type Props = { params: Promise<{ slug: string }> };
 
 async function getBusiness(slug: string) {
+  const demo = getDemoBusiness(slug);
+  if (demo) return demo;
+
   const supabase = supabaseAnon();
   const { data } = await supabase
     .from("businesses")
@@ -20,7 +24,8 @@ async function getBusiness(slug: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const business = await getBusiness(params.slug);
+  const { slug } = await params;
+  const business = await getBusiness(slug);
   return {
     title: business ? `${business.name} — Tu opinión` : "PositivIA",
     robots: { index: false },
@@ -28,7 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function RatingPage({ params }: Props) {
-  const business = await getBusiness(params.slug);
+  const { slug } = await params;
+  const business = await getBusiness(slug);
 
   if (!business || business.plan_status === "cancelled") {
     return (

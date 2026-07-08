@@ -13,6 +13,93 @@ const statusStyle: Record<string, string> = {
   cancelled: "bg-neutral-200 text-neutral-500",
 };
 
+type AccessLink = {
+  label: string;
+  href: string;
+  hint: string;
+  external?: boolean;
+};
+
+const accessGroups: { title: string; links: AccessLink[] }[] = [
+  {
+    title: "Demo vendible",
+    links: [
+      {
+        label: "QR demo",
+        href: "/r/demo-restaurante",
+        hint: "Experiencia del cliente final",
+      },
+      {
+        label: "Panel demo",
+        href: "/demo/dashboard",
+        hint: "Vista de dueño sin login",
+      },
+      {
+        label: "Reseña simulada",
+        href: "/demo/google-review",
+        hint: "Paso externo controlado",
+      },
+      {
+        label: "Descargar QR",
+        href: "/api/qr?slug=demo-restaurante&download=1",
+        hint: "PNG listo para imprimir",
+      },
+    ],
+  },
+  {
+    title: "Operación diaria",
+    links: [
+      {
+        label: "Clientes",
+        href: "/superadmin",
+        hint: "Alta, plan, estado y QR",
+      },
+      {
+        label: "Nuevo cliente",
+        href: "#nuevo-cliente",
+        hint: "Formulario de alta",
+      },
+      {
+        label: "Panel dueño",
+        href: "/admin/dashboard",
+        hint: "Vista real con RLS",
+      },
+      {
+        label: "Login",
+        href: "/admin/login",
+        hint: "Acceso dueño/superadmin",
+      },
+    ],
+  },
+  {
+    title: "Sistema",
+    links: [
+      {
+        label: "Cron semanal",
+        href: "/api/cron/weekly-summaries",
+        hint: "Endpoint protegido",
+      },
+      {
+        label: "QR API",
+        href: "/api/qr?slug=demo-restaurante",
+        hint: "Render PNG demo",
+      },
+      {
+        label: "Landing IAPacks",
+        href: "https://iapacks.com/positivia/",
+        hint: "Página comercial",
+        external: true,
+      },
+      {
+        label: "Vercel",
+        href: "https://vercel.com/jsantospro/positivia",
+        hint: "Proyecto deployment",
+        external: true,
+      },
+    ],
+  },
+];
+
 export default async function SuperadminPage() {
   const su = await getSuperadmin();
 
@@ -59,6 +146,69 @@ export default async function SuperadminPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
+        <section className="mb-8 rounded-2xl border bg-white p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-700">
+                Centro de control
+              </p>
+              <h1 className="mt-1 text-2xl font-bold text-neutral-900">
+                Accesos rápidos
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm text-neutral-500">
+                Todo lo necesario para enseñar la demo, operar clientes y revisar
+                endpoints internos desde una sola pantalla.
+              </p>
+            </div>
+            <a
+              href="https://positivia.vercel.app/"
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Abrir producción
+            </a>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {accessGroups.map((group) => (
+              <div key={group.title} className="rounded-xl border border-neutral-200 p-4">
+                <h2 className="text-sm font-semibold text-neutral-900">{group.title}</h2>
+                <div className="mt-3 space-y-2">
+                  {group.links.map((link) => {
+                    const className =
+                      "block rounded-lg border border-neutral-200 px-3 py-2 transition-colors hover:border-green-300 hover:bg-green-50";
+                    const content = (
+                      <>
+                        <span className="block text-sm font-medium text-neutral-900">
+                          {link.label}
+                        </span>
+                        <span className="block text-xs text-neutral-500">{link.hint}</span>
+                      </>
+                    );
+
+                    return link.external ? (
+                      <a
+                        key={link.label}
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={className}
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <Link key={link.label} href={link.href} className={className}>
+                        {content}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-neutral-900">Clientes</h1>
@@ -66,7 +216,7 @@ export default async function SuperadminPage() {
           </div>
         </div>
 
-        <div className="mb-8">
+        <div id="nuevo-cliente" className="mb-8 scroll-mt-6">
           <NewClientForm parents={parents} />
         </div>
 

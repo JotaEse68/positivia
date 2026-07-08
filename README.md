@@ -26,6 +26,19 @@ manda a todo el mundo al mismo sitio; PositivIA decide.
 
 ---
 
+## Demo funcional
+
+Sin tocar datos reales:
+
+- QR demo: `/r/demo-restaurante`
+- Panel demo: `/demo/dashboard`
+- PNG demo: `/api/qr?slug=demo-restaurante&download=1`
+
+La demo simula el paso externo de reseña en `/demo/google-review`, para enseñar
+el recorrido completo sin publicar nada en una ficha real.
+
+---
+
 ## Dar de alta un cliente nuevo (sin tocar código)
 
 Todo se hace desde el **panel superadmin**, protegido por el email definido en
@@ -54,9 +67,9 @@ El dueño accede a **`/admin/login`** con su email. Verá su dashboard con los
 KPIs (reseñas públicas generadas vs quejas interceptadas), la lista de quejas
 con la respuesta sugerida por IA (Pro) y los resúmenes semanales.
 
-> Para que el dueño vea sus datos hay que vincular su usuario al negocio en la
-> tabla `admin_users` (`business_id` + `auth_user_id`). El alta de ese vínculo
-> se hace tras su primer login.
+El acceso se vincula automáticamente en el primer login si el email de Clerk
+coincide con `businesses.email_owner`. Si necesitas dar acceso a varias
+personas o usar otro email, añade una fila en `admin_users`.
 
 ---
 
@@ -68,15 +81,24 @@ cp .env.example .env.local   # rellena las variables
 npm run dev                  # http://localhost:3000
 ```
 
-Variables de entorno: ver **`.env.example`**. Mínimo para arrancar: las 3 de
-Supabase + `SUPERADMIN_EMAIL`. Las de Twilio/Resend/Anthropic degradan limpio
-si faltan (el sistema no rompe, solo desactiva ese canal/feature).
+Variables de entorno: ver **`.env.example`**. Mínimo para arrancar el producto
+real: Supabase, Clerk y `SUPERADMIN_EMAIL`. Las de Twilio/Resend/Anthropic
+degradan limpio si faltan (el sistema no rompe, solo desactiva ese canal o
+feature). Para producción configura también `CRON_SECRET`.
 
 ### Base de datos
 
 El esquema completo está en **`supabase/schema.sql`** (tablas + RLS). Ejecútalo
-una vez en el SQL Editor de Supabase. El bucket público `logos` para los logos
-de los negocios se crea aparte (ver comentarios del panel superadmin).
+una vez en el SQL Editor de Supabase. Para una base ya existente, aplica los
+archivos de **`supabase/migrations/`**. El bucket público `logos` para los logos
+de los negocios se crea desde el schema.
+
+### Cron semanal
+
+`vercel.json` programa `/api/cron/weekly-summaries` cada lunes a las 08:00 UTC.
+El endpoint procesa negocios Pro activos y dispara `/api/ai-summary` negocio a
+negocio. En producción ambos endpoints esperan `Authorization: Bearer
+CRON_SECRET`.
 
 ## Stack
 
@@ -89,11 +111,13 @@ Tailwind CSS · Anthropic (Claude Haiku) · Twilio / Resend · Vercel.
 app/
   r/[slug]           landing pública de valoración (destino del QR)
   admin/             panel del dueño (auth magic link, guard por middleware)
+  demo/              demo pública para enseñar QR + dashboard sin login
   superadmin/        gestión global de clientes (gate por SUPERADMIN_EMAIL)
   api/
     feedback         recibe rating y decide el routing
     notify           alerta al dueño (WhatsApp → email)
     ai-*             clasificación, respuesta sugerida y resumen (Pro)
+    cron/*           automatizaciones internas protegidas por CRON_SECRET
     complaint/*      acciones del dueño sobre sus quejas (RLS)
     superadmin/*     alta y gestión de clientes (solo superadmin)
     qr               genera el PNG del QR

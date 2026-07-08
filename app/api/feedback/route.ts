@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getDemoBusiness } from "@/lib/demo";
 import { supabaseAdmin } from "@/lib/supabase";
 
 // Recibe rating (+ comentario opcional) desde la landing pública y
@@ -16,6 +17,15 @@ export async function POST(req: NextRequest) {
 
     if (!slug || !Number.isInteger(rating) || rating < 1 || rating > 5) {
       return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    }
+
+    const demo = getDemoBusiness(slug);
+    if (demo) {
+      return NextResponse.json({
+        ok: true,
+        demo: true,
+        redirectUrl: rating >= 4 ? demo.google_review_link : null,
+      });
     }
 
     const supabase = supabaseAdmin();

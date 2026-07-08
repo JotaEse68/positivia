@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { sendWhatsApp } from "@/lib/whatsapp";
 import { sendEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/html";
+import { recordNotificationEvent } from "@/lib/notification-events";
 
 // Recibe un feedbackId (lo dispara /api/feedback tras una queja negativa) y
 // alerta al dueño: WhatsApp si está configurado y hay número, si no email.
@@ -20,7 +22,7 @@ export async function POST(req: NextRequest) {
     const { data: feedback } = await supabase
       .from("feedback")
       .select(
-        "id, rating, comment, created_at, business:businesses(name, plan, whatsapp_owner, email_owner)"
+        "id, business_id, rating, comment, created_at, business:businesses(name, plan, whatsapp_owner, email_owner)"
       )
       .eq("id", feedbackId)
       .maybeSingle();
@@ -40,6 +42,8 @@ export async function POST(req: NextRequest) {
     });
     const stars = "★".repeat(feedback.rating) + "☆".repeat(5 - feedback.rating);
     const comment = feedback.comment?.trim() || "(sin comentario)";
+    const safeBusinessName = escapeHtml(business.name);
+    const safeComment = escapeHtml(comment);
 
     const textBody =
       `⚠️ Nueva queja privada en ${business.name}\n\n` +
@@ -51,9 +55,9 @@ export async function POST(req: NextRequest) {
     const htmlBody =
       `<div style="font-family:system-ui,sans-serif;max-width:520px">` +
       `<h2 style="color:#dc2626;margin:0 0 8px">⚠️ Nueva queja privada</h2>` +
-      `<p style="margin:0 0 4px"><strong>${business.name}</strong></p>` +
+      `<p style="margin:0 0 4px"><strong>${safeBusinessName}</strong></p>` +
       `<p style="margin:0 0 4px">Valoración: <strong>${feedback.rating}/5</strong> ${stars}</p>` +
-      `<p style="margin:8px 0;padding:12px;background:#f9fafb;border-radius:8px">${comment}</p>` +
+      `<p style="margin:8px 0;padding:12px;background:#f9fafb;border-radius:8px">${safeComment}</p>` +
       `<p style="color:#6b7280;font-size:13px">Recibida el ${when}</p>` +
       `<p style="color:#6b7280;font-size:13px">Responde desde tu panel de PositivIA.</p>` +
       `</div>`;
@@ -93,11 +97,27 @@ export async function POST(req: NextRequest) {
 
     if (!channel) {
       console.error("[notify] sin canal disponible:", error);
+      await recordNotificationEvent(supabase, {
+        businessId: feedback.business_id,
+        feedbackId: feedback.id,
+        eventType: "complaint_alert",
+        channel: "none",
+        status: "failed",
+        error: error ?? "no_channel_configured",
+      });
       return NextResponse.json(
         { ok: false, error: error ?? "no_channel_configured" },
         { status: 502 }
       );
     }
+
+    await recordNotificationEvent(supabase, {
+      businessId: feedback.business_id,
+      feedbackId: feedback.id,
+      eventType: "complaint_alert",
+      channel: channel as "whatsapp" | "email",
+      status: "sent",
+    });
 
     return NextResponse.json({ ok: true, channel });
   } catch (err) {

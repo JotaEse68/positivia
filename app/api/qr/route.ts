@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import QRCode from "qrcode";
+import { getDemoBusiness } from "@/lib/demo";
 import { supabaseAdmin } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
 
 // Genera el PNG del QR de un negocio, apuntando a la landing pública
 // /r/[slug]. Alta resolución (apto para imprimir en ticket). Valida que el
@@ -13,11 +16,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "slug requerido" }, { status: 400 });
     }
 
-    const { data: business } = await supabaseAdmin()
-      .from("businesses")
-      .select("slug")
-      .eq("slug", slug)
-      .maybeSingle();
+    const demo = getDemoBusiness(slug);
+    const business =
+      demo ??
+      (
+        await supabaseAdmin()
+          .from("businesses")
+          .select("slug")
+          .eq("slug", slug)
+          .maybeSingle()
+      ).data;
+
     if (!business) {
       return NextResponse.json({ error: "Negocio no encontrado" }, { status: 404 });
     }

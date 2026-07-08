@@ -28,7 +28,7 @@ export default function RatingStars({ slug }: Props) {
         });
         const data = await res.json();
         if (res.ok && data.redirectUrl) {
-          window.location.href = data.redirectUrl;
+          window.location.assign(data.redirectUrl);
           return;
         }
         // Sin link de Google configurado: agradecer y terminar.
