@@ -1,4 +1,5 @@
 import { SignIn } from "@clerk/nextjs";
+import Link from "next/link";
 
 // Login con Clerk. Al autenticarse, redirige al dashboard del dueño.
 export default function LoginPage() {
@@ -17,6 +18,12 @@ export default function LoginPage() {
             variables: { colorPrimary: "#16a34a" },
           }}
         />
+        <p className="mt-4 text-center text-sm text-neutral-400">
+          ¿No recuerdas la contraseña?{" "}
+          <Link href="/admin/reset-password" className="text-green-400 underline">
+            Cambiarla por email
+          </Link>
+        </p>
       </div>
     </main>
   );

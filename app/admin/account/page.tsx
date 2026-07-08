@@ -1,34 +1,62 @@
-import { UserProfile } from "@clerk/nextjs";
+import Link from "next/link";
+import { currentUser } from "@clerk/nextjs/server";
+import PasswordResetForm from "@/components/PasswordResetForm";
 
-export default function AccountPage() {
+export default async function AccountPage() {
+  const user = await currentUser();
+  const email = user?.emailAddresses?.[0]?.emailAddress ?? "";
+
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-5">
+      <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-700">
           Cuenta
         </p>
         <h1 className="mt-1 text-2xl font-bold text-neutral-900">
-          Contraseña y seguridad
+          Acceso y contraseña
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-neutral-500">
-          Gestiona contraseña, emails, métodos de acceso y sesiones. Si no
-          recuerdas la contraseña actual, usa el método alternativo de
-          verificación que muestra Clerk.
+          Clerk solo gestiona el login. El WhatsApp del negocio se cambia en la
+          ficha del cliente, no en el teléfono de la cuenta.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border bg-white p-2">
-        <UserProfile
-          routing="path"
-          path="/admin/account"
-          appearance={{
-            variables: { colorPrimary: "#16a34a" },
-            elements: {
-              cardBox: "shadow-none",
-              navbar: "bg-white",
-            },
-          }}
-        />
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <PasswordResetForm />
+
+        <aside className="space-y-5">
+          <section className="rounded-2xl border bg-white p-6">
+            <h2 className="text-lg font-semibold text-neutral-900">Tu sesión</h2>
+            <dl className="mt-4 space-y-3 text-sm">
+              <div>
+                <dt className="text-neutral-400">Email</dt>
+                <dd className="font-medium text-neutral-900">{email || "Sin email"}</dd>
+              </div>
+              <div>
+                <dt className="text-neutral-400">ID usuario</dt>
+                <dd className="break-all font-mono text-xs text-neutral-700">
+                  {user?.id ?? "Sin sesión"}
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="rounded-2xl border bg-amber-50 p-6">
+            <h2 className="text-lg font-semibold text-amber-950">
+              El móvil no va aquí
+            </h2>
+            <p className="mt-2 text-sm text-amber-900">
+              Si quieres cambiar el número donde llegan las alertas, entra en
+              Superadmin, abre el cliente y edita el WhatsApp del dueño.
+            </p>
+            <Link
+              href="/superadmin"
+              className="mt-4 inline-block rounded-lg bg-amber-900 px-4 py-2 text-sm font-semibold text-white"
+            >
+              Ir a clientes
+            </Link>
+          </section>
+        </aside>
       </div>
     </main>
   );
