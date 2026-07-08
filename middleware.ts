@@ -35,8 +35,9 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isAuthRoute =
     path.startsWith("/admin/login") || path.startsWith("/admin/auth");
+  const isProtected = path.startsWith("/admin") || path.startsWith("/superadmin");
 
-  if (!user && path.startsWith("/admin") && !isAuthRoute) {
+  if (!user && isProtected && !isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);
@@ -52,5 +53,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/superadmin/:path*"],
 };
