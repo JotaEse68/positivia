@@ -28,11 +28,11 @@ export default function ComplaintForm({ slug, rating }: Props) {
 
   if (status === "sent") {
     return (
-      <div className="mt-8">
-        <p className="text-lg font-medium text-neutral-800">
-          Gracias por contárnoslo 🙏
+      <div className="mt-6 rounded-2xl bg-green-50 p-4 text-center">
+        <p className="text-lg font-semibold text-green-800">
+          Gracias por contárnoslo
         </p>
-        <p className="mt-2 text-neutral-600">
+        <p className="mt-2 text-sm text-green-700">
           El responsable del negocio lo leerá directamente y tomará medidas.
         </p>
       </div>
@@ -40,7 +40,7 @@ export default function ComplaintForm({ slug, rating }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-8 text-left">
+    <form onSubmit={handleSubmit} className="mt-6 text-left">
       <h2 className="text-center text-xl font-semibold text-neutral-900">
         Cuéntanos qué pasó
       </h2>
@@ -54,18 +54,18 @@ export default function ComplaintForm({ slug, rating }: Props) {
         rows={4}
         autoFocus
         placeholder="Escribe aquí lo que no ha ido bien…"
-        className="mt-4 w-full rounded-xl border border-neutral-300 p-3 text-base focus:border-[var(--brand)] focus:outline-none"
+        className="mt-4 w-full rounded-2xl border border-neutral-300 bg-neutral-50 p-4 text-base text-neutral-900 focus:border-[var(--brand)] focus:bg-white focus:outline-none"
       />
       <button
         type="submit"
         disabled={status === "sending"}
-        className="mt-4 w-full rounded-xl py-3 text-lg font-semibold text-white transition-opacity disabled:opacity-60"
+        className="mt-4 w-full rounded-2xl py-3 text-lg font-semibold text-white shadow-lg shadow-neutral-900/10 transition-opacity disabled:opacity-60"
         style={{ backgroundColor: "var(--brand)" }}
       >
         {status === "sending" ? "Enviando…" : "Enviar"}
       </button>
       {status === "error" && (
-        <p className="mt-3 text-center text-sm text-red-500">
+        <p className="mt-3 rounded-xl bg-red-50 p-3 text-center text-sm font-medium text-red-600">
           No se pudo enviar. Inténtalo de nuevo.
         </p>
       )}

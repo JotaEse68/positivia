@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { getSuperadmin } from "@/lib/superadmin";
 import { supabaseAdmin } from "@/lib/supabase";
-import ClientStatusControls from "@/components/ClientStatusControls";
+import ClientEditForm from "@/components/ClientEditForm";
 
 export const dynamic = "force-dynamic";
 
@@ -30,13 +30,6 @@ export default async function ClientDetailPage({
 
   const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "";
   const landingUrl = `${base}/r/${b.slug}`;
-
-  const field = (label: string, value: string | null) => (
-    <div>
-      <p className="text-xs text-neutral-400">{label}</p>
-      <p className="text-sm text-neutral-800">{value || "—"}</p>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-neutral-100">
@@ -74,21 +67,8 @@ export default async function ClientDetailPage({
           </div>
         </div>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-2">
-          {/* Datos y estado */}
-          <section className="rounded-2xl border bg-white p-6">
-            <h2 className="mb-4 text-lg font-semibold text-neutral-900">Datos</h2>
-            <div className="mb-4">
-              <p className="mb-1 text-xs text-neutral-400">Plan y estado</p>
-              <ClientStatusControls id={b.id} plan={b.plan} planStatus={b.plan_status} />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              {field("Google", b.google_review_link)}
-              {field("WhatsApp dueño", b.whatsapp_owner)}
-              {field("Email dueño", b.email_owner)}
-              {field("Color", b.color_primary)}
-            </div>
-          </section>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+          <ClientEditForm client={b} />
 
           {/* QR imprimible */}
           <section className="rounded-2xl border bg-white p-6 text-center">
@@ -109,6 +89,14 @@ export default async function ClientDetailPage({
               className="mt-4 inline-block rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
             >
               ⬇ Descargar PNG (alta resolución)
+            </a>
+            <a
+              href={`/r/${b.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block rounded-lg border px-4 py-2 text-sm font-medium text-neutral-700"
+            >
+              Abrir evaluación
             </a>
           </section>
         </div>

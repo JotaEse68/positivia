@@ -69,6 +69,11 @@ const accessGroups: { title: string; links: AccessLink[] }[] = [
         href: "/admin/login",
         hint: "Acceso dueño/superadmin",
       },
+      {
+        label: "Cuenta y contraseña",
+        href: "/admin/account",
+        hint: "Seguridad, sesiones y recuperación",
+      },
     ],
   },
   {
@@ -226,7 +231,7 @@ export default async function SuperadminPage() {
               <tr>
                 <th className="px-4 py-3 font-medium">Negocio</th>
                 <th className="px-4 py-3 font-medium">Plan / Estado</th>
-                <th className="px-4 py-3 font-medium">QR</th>
+                <th className="px-4 py-3 font-medium">Gestionar</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -274,7 +279,7 @@ export default async function SuperadminPage() {
                         href={`/superadmin/clients/${b.slug}`}
                         className="text-green-600 hover:underline"
                       >
-                        Ver QR
+                        Editar / QR
                       </Link>
                     </td>
                   </tr>

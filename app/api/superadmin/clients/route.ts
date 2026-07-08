@@ -104,6 +104,40 @@ export async function PATCH(req: NextRequest) {
     }
 
     const update: Record<string, unknown> = {};
+    if (typeof body.name === "string" && body.name.trim()) {
+      update.name = body.name.trim();
+    }
+    if (typeof body.slug === "string") {
+      const slug = body.slug.trim().toLowerCase();
+      if (!SLUG_RE.test(slug)) {
+        return NextResponse.json({ error: "Slug inválido" }, { status: 400 });
+      }
+      update.slug = slug;
+    }
+    if (typeof body.color_primary === "string") {
+      const color = body.color_primary.trim();
+      if (!COLOR_RE.test(color)) {
+        return NextResponse.json({ error: "Color inválido" }, { status: 400 });
+      }
+      update.color_primary = color;
+    }
+    if ("google_review_link" in body) {
+      const value =
+        typeof body.google_review_link === "string"
+          ? body.google_review_link.trim()
+          : "";
+      update.google_review_link = value || null;
+    }
+    if ("whatsapp_owner" in body) {
+      const value =
+        typeof body.whatsapp_owner === "string" ? body.whatsapp_owner.trim() : "";
+      update.whatsapp_owner = value || null;
+    }
+    if ("email_owner" in body) {
+      const value =
+        typeof body.email_owner === "string" ? body.email_owner.trim() : "";
+      update.email_owner = value || null;
+    }
     if (body.plan === "starter" || body.plan === "pro") update.plan = body.plan;
     if (["trial", "active", "cancelled"].includes(body.plan_status)) {
       update.plan_status = body.plan_status;
@@ -117,9 +151,12 @@ export async function PATCH(req: NextRequest) {
       .update(update)
       .eq("id", id);
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      const msg = error.message.includes("duplicate")
+        ? "Ese slug ya está en uso"
+        : error.message;
+      return NextResponse.json({ error: msg }, { status: 400 });
     }
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, slug: update.slug ?? null });
   } catch (err) {
     console.error("[superadmin/clients PATCH] error:", err);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

@@ -47,17 +47,27 @@ export default function RatingStars({ slug }: Props) {
 
   if (rating !== null && rating >= 4 && !redirecting) {
     return (
-      <p className="mt-8 text-lg font-medium text-neutral-700">
-        ¡Gracias por tu valoración! 🎉
-      </p>
+      <div className="mt-6 rounded-2xl bg-green-50 p-4 text-center">
+        <p className="text-lg font-semibold text-green-800">
+          Gracias por tu valoración
+        </p>
+        <p className="mt-1 text-sm text-green-700">
+          Tu opinión ayuda mucho al negocio.
+        </p>
+      </div>
     );
   }
 
   if (redirecting) {
     return (
-      <p className="mt-8 animate-pulse text-lg font-medium text-neutral-700">
-        Redirigiendo a Google…
-      </p>
+      <div className="mt-6 rounded-2xl bg-green-50 p-4 text-center">
+        <p className="animate-pulse text-lg font-semibold text-green-800">
+          Abriendo la reseña...
+        </p>
+        <p className="mt-1 text-sm text-green-700">
+          Te llevamos al siguiente paso.
+        </p>
+      </div>
     );
   }
 
@@ -66,26 +76,28 @@ export default function RatingStars({ slug }: Props) {
   }
 
   return (
-    <div className="mt-8">
-      <div className="flex justify-center gap-2">
+    <div className="mt-5">
+      <div className="grid grid-cols-5 gap-2">
         {[1, 2, 3, 4, 5].map((value) => (
           <button
             key={value}
             type="button"
             onClick={() => handleSelect(value)}
             aria-label={`${value} estrellas`}
-            className="flex h-14 w-14 items-center justify-center rounded-xl text-4xl transition-transform active:scale-90"
+            className="group flex aspect-square items-center justify-center rounded-2xl border border-neutral-200 bg-white text-4xl shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 active:scale-95"
           >
-            <span className="text-neutral-300 hover:text-yellow-400">★</span>
+            <span className="text-neutral-300 transition-colors group-hover:text-amber-400">
+              ★
+            </span>
           </button>
         ))}
       </div>
-      <div className="mt-1 flex justify-between px-2 text-xs text-neutral-400">
-        <span>Mal</span>
+      <div className="mt-3 flex justify-between px-1 text-xs font-medium text-neutral-500">
+        <span>No fue bien</span>
         <span>Excelente</span>
       </div>
       {error && (
-        <p className="mt-4 text-sm text-red-500">
+        <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">
           No se pudo enviar. Inténtalo de nuevo.
         </p>
       )}
