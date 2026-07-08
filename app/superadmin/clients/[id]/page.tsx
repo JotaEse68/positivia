@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
 import { getSuperadmin } from "@/lib/superadmin";
 import { supabaseAdmin } from "@/lib/supabase";
 import ClientStatusControls from "@/components/ClientStatusControls";
@@ -43,11 +44,7 @@ export default async function ClientDetailPage({
           <Link href="/superadmin" className="text-sm text-neutral-300 hover:text-white">
             ← Todos los clientes
           </Link>
-          <form action="/admin/auth/signout" method="post">
-            <button className="rounded-lg border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300">
-              Salir
-            </button>
-          </form>
+          <UserButton />
         </div>
       </header>
 

@@ -1,57 +1,25 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Refresca la sesión de Supabase en cada request del área admin y protege las
-// rutas: sin sesión → redirige a /admin/login. La página de login y el callback
-// de auth quedan fuera del guard.
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
+// Rutas que exigen sesión de Clerk. La página de login (/admin/login) y las
+// rutas públicas (landing /r, /api/feedback, /api/qr, notificaciones internas)
+// quedan fuera.
+const isProtected = createRouteMatcher([
+  "/admin/dashboard(.*)",
+  "/superadmin(.*)",
+  "/api/superadmin(.*)",
+  "/api/complaint(.*)",
+]);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
-  const isAuthRoute =
-    path.startsWith("/admin/login") || path.startsWith("/admin/auth");
-  const isProtected = path.startsWith("/admin") || path.startsWith("/superadmin");
-
-  if (!user && isProtected && !isAuthRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin/login";
-    return NextResponse.redirect(url);
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtected(req)) {
+    await auth.protect();
   }
-
-  if (user && path.startsWith("/admin/login")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/admin/dashboard";
-    return NextResponse.redirect(url);
-  }
-
-  return response;
-}
+});
 
 export const config = {
-  matcher: ["/admin/:path*", "/superadmin/:path*"],
+  matcher: [
+    // Todas las rutas salvo estáticos e internos de Next.
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
 };

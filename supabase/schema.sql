@@ -53,17 +53,19 @@ create index idx_feedback_business_created on feedback (business_id, created_at 
 create index idx_feedback_business_status on feedback (business_id, status);
 
 -- ---------- admin_users ----------
--- Vincula usuarios de Supabase Auth con el negocio que administran.
+-- Vincula usuarios de Clerk (clerk_user_id) con el negocio que administran.
+-- La autenticación la hace Clerk; Supabase valida su token vía third-party
+-- auth y el RLS usa auth.jwt()->>'sub' (el user id de Clerk).
 create table admin_users (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
-  auth_user_id uuid not null references auth.users(id) on delete cascade,
+  clerk_user_id text not null,
   role admin_role_type not null default 'owner',
   created_at timestamptz not null default now(),
-  unique (business_id, auth_user_id)
+  unique (business_id, clerk_user_id)
 );
 
-create index idx_admin_users_auth on admin_users (auth_user_id);
+create index idx_admin_users_clerk on admin_users (clerk_user_id);
 
 -- ---------- weekly_summaries ----------
 create table weekly_summaries (
@@ -111,8 +113,8 @@ stable
 as $$
   select b.id
   from businesses b
-  where b.id in (select business_id from admin_users where auth_user_id = auth.uid())
-     or b.parent_business_id in (select business_id from admin_users where auth_user_id = auth.uid());
+  where b.id in (select business_id from admin_users where clerk_user_id = auth.jwt()->>'sub')
+     or b.parent_business_id in (select business_id from admin_users where clerk_user_id = auth.jwt()->>'sub');
 $$;
 
 -- businesses: lectura pública mínima (la landing /r/[slug] la necesita);
@@ -144,7 +146,7 @@ create policy "owners can update their feedback"
 create policy "users can read own admin rows"
   on admin_users for select
   to authenticated
-  using (auth_user_id = auth.uid());
+  using (clerk_user_id = auth.jwt()->>'sub');
 
 -- weekly_summaries: solo lectura para dueños. Escritura vía service role
 -- (el job semanal corre server-side).
