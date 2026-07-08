@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
 import { getSuperadmin } from "@/lib/superadmin";
 import { supabaseAdmin } from "@/lib/supabase";
 import NewClientForm from "@/components/NewClientForm";
@@ -53,11 +54,7 @@ export default async function SuperadminPage() {
             Positiv<span className="text-green-400">IA</span>{" "}
             <span className="text-xs font-normal text-neutral-400">superadmin</span>
           </span>
-          <form action="/admin/auth/signout" method="post">
-            <button className="rounded-lg border border-neutral-700 px-3 py-1.5 text-sm text-neutral-300">
-              Salir
-            </button>
-          </form>
+          <UserButton />
         </div>
       </header>
 
