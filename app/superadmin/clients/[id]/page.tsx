@@ -5,6 +5,8 @@ import { getSuperadmin } from "@/lib/superadmin";
 import { normalizeRatingCopy } from "@/lib/rating-copy";
 import { supabaseAdmin } from "@/lib/supabase";
 import ClientEditForm from "@/components/ClientEditForm";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
+import TestNotificationButton from "@/components/TestNotificationButton";
 import LogoutButton from "@/components/LogoutButton";
 
 export const dynamic = "force-dynamic";
@@ -195,6 +197,20 @@ export default async function ClientDetailPage({
               </div>
             </section>
 
+            <OnboardingChecklist business={businessForForm} qrUrl={landingUrl} />
+
+            <section className="rounded-2xl border bg-white p-5">
+              <h2 className="text-lg font-black text-neutral-900">
+                Aviso al encargado
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-neutral-500">
+                Envía una queja de prueba y confirma que llega por WhatsApp o email.
+              </p>
+              <div className="mt-4">
+                <TestNotificationButton businessId={b.id} />
+              </div>
+            </section>
+
             <section className="rounded-2xl border border-amber-100 bg-[#FFF8E7] p-5">
               <h2 className="text-lg font-black text-[#5A3D25]">
                 Medidas útiles
@@ -217,7 +233,7 @@ export default async function ClientDetailPage({
           </aside>
         </div>
 
-        <section className="mt-8 rounded-2xl border bg-white p-6">
+        <section id="guion-equipo" className="mt-8 rounded-2xl border bg-white p-6">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
             Ayuda para conseguir más reseñas
           </p>

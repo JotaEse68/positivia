@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import OnboardingChecklist from "@/components/OnboardingChecklist";
 
 type Parent = { id: string; name: string };
 
@@ -10,7 +11,12 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState<{ slug: string } | null>(null);
+  const [created, setCreated] = useState<{
+    slug: string;
+    emailOwner: string;
+    googleReviewLink: string;
+    ownerUser?: { created: boolean; existed: boolean; error?: string } | null;
+  } | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -24,7 +30,12 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
-      setCreated({ slug: data.slug });
+      setCreated({
+        slug: data.slug,
+        emailOwner: String(form.get("email_owner") ?? ""),
+        googleReviewLink: String(form.get("google_review_link") ?? ""),
+        ownerUser: data.ownerUser ?? null,
+      });
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -35,13 +46,29 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
 
   if (created) {
     return (
-      <div className="rounded-2xl border bg-white p-6 text-center">
+      <div className="space-y-4 rounded-2xl border bg-white p-6">
+        <div className="text-center">
         <p className="text-lg font-semibold text-neutral-900">
           Cliente creado ✓
         </p>
         <p className="mt-1 text-sm text-neutral-500">
           El QR ya está disponible en la ficha del cliente.
         </p>
+          {created.ownerUser && (
+            <p
+              className={`mt-2 rounded-xl px-3 py-2 text-sm font-bold ${
+                created.ownerUser.error
+                  ? "bg-red-50 text-red-700"
+                  : "bg-green-50 text-green-700"
+              }`}
+            >
+              {created.ownerUser.error
+                ? `Negocio creado, pero no se pudo crear el usuario: ${created.ownerUser.error}`
+                : created.ownerUser.existed
+                  ? "Usuario dueño actualizado y vinculado."
+                  : "Usuario dueño creado y vinculado."}
+            </p>
+          )}
         <div className="mt-4 flex justify-center gap-2">
           <a
             href={`/superadmin/clients/${created.slug}`}
@@ -56,6 +83,14 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
             Crear otro
           </button>
         </div>
+        </div>
+        <OnboardingChecklist
+          business={{
+            slug: created.slug,
+            google_review_link: created.googleReviewLink,
+            email_owner: created.emailOwner,
+          }}
+        />
       </div>
     );
   }
@@ -111,6 +146,19 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
         <div>
           <label className="text-sm text-neutral-600">Email del dueño</label>
           <input name="email_owner" type="email" className={input} placeholder="dueño@negocio.com" />
+        </div>
+        <div>
+          <label className="text-sm text-neutral-600">Contraseña temporal del dueño</label>
+          <input
+            name="owner_password"
+            type="text"
+            className={input}
+            placeholder="Ejemplo: Cambiar123!"
+            minLength={8}
+          />
+          <p className="mt-1 text-xs text-neutral-400">
+            Si rellenas email y contraseña, se crea el acceso del cliente.
+          </p>
         </div>
         <div>
           <label className="text-sm text-neutral-600">Plan</label>

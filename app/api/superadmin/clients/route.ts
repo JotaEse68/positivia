@@ -38,6 +38,78 @@ function isMissingSettingsTable(error: { code?: string; message?: string }) {
   );
 }
 
+async function findAuthUserByEmail(email: string) {
+  const admin = supabaseAdmin();
+  const needle = email.trim().toLowerCase();
+  let page = 1;
+
+  while (page < 10) {
+    const { data, error } = await admin.auth.admin.listUsers({
+      page,
+      perPage: 100,
+    });
+    if (error || !data.users.length) return null;
+
+    const match = data.users.find(
+      (user) => user.email?.trim().toLowerCase() === needle
+    );
+    if (match) return match;
+    page += 1;
+  }
+
+  return null;
+}
+
+async function ensureOwnerUser({
+  businessId,
+  businessName,
+  email,
+  password,
+}: {
+  businessId: string;
+  businessName: string;
+  email: string;
+  password: string;
+}) {
+  const admin = supabaseAdmin();
+  const existing = await findAuthUserByEmail(email);
+  const metadata = {
+    full_name: businessName,
+    business_id: businessId,
+    role: "owner",
+  };
+
+  const { data, error } = existing
+    ? await admin.auth.admin.updateUserById(existing.id, {
+        password,
+        email_confirm: true,
+        user_metadata: { ...existing.user_metadata, ...metadata },
+      })
+    : await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: metadata,
+      });
+
+  if (error || !data.user) {
+    return { error: error?.message ?? "No se pudo crear el usuario" };
+  }
+
+  const { error: linkError } = await admin.from("admin_users").upsert(
+    {
+      business_id: businessId,
+      clerk_user_id: data.user.id,
+      role: "owner",
+    },
+    { onConflict: "business_id,clerk_user_id" }
+  );
+
+  if (linkError) return { error: linkError.message };
+
+  return { userId: data.user.id, existed: Boolean(existing) };
+}
+
 function isMissingColumn(error: { code?: string; message?: string }, column: string) {
   return error.code === "42703" || error.message?.includes(column) === true;
 }
@@ -101,6 +173,7 @@ export async function POST(req: NextRequest) {
     const plan = String(form.get("plan") ?? "starter").trim();
     const parentId = String(form.get("parent_business_id") ?? "").trim() || null;
     const logo = form.get("logo");
+    const ownerPassword = String(form.get("owner_password") ?? "").trim();
 
     if (!name || !SLUG_RE.test(slug)) {
       return NextResponse.json(
@@ -159,7 +232,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 });
     }
 
-    return NextResponse.json({ ok: true, id: data.id, slug: data.slug });
+    let ownerUser:
+      | { created: boolean; existed: boolean; error?: never }
+      | { created: false; existed: false; error: string }
+      | null = null;
+
+    if (email && ownerPassword) {
+      const result = await ensureOwnerUser({
+        businessId: data.id,
+        businessName: name,
+        email,
+        password: ownerPassword,
+      });
+      ownerUser = result.error
+        ? { created: false, existed: false, error: result.error }
+        : { created: true, existed: Boolean(result.existed) };
+    }
+
+    return NextResponse.json({
+      ok: true,
+      id: data.id,
+      slug: data.slug,
+      ownerUser,
+    });
   } catch (err) {
     console.error("[superadmin/clients] error:", err);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

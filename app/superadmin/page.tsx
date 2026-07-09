@@ -25,6 +25,11 @@ const accessGroups: { title: string; links: AccessLink[] }[] = [
     title: "Demo vendible",
     links: [
       {
+        label: "Demo guiada",
+        href: "/demo",
+        hint: "Recorrido vendible completo",
+      },
+      {
         label: "QR demo",
         href: "/r/demo-restaurante",
         hint: "Experiencia del cliente final",
