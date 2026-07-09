@@ -99,9 +99,9 @@ export default async function RatingPage({ params }: Props) {
               </span>
             </div>
 
-            <div className="mt-8 pr-14">
+            <div className="mt-8 max-w-[15rem]">
               <p className="text-3xl font-black leading-tight">
-                ¿Qué tal te ha cuidado el equipo?
+                ¿Qué tal fue tu visita?
               </p>
               <p className="mt-2 max-w-xs text-sm leading-6 text-white/85">
                 Una estrella basta. Si algo falló, se lo cuentas en privado al
@@ -110,7 +110,7 @@ export default async function RatingPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="relative mx-4 mt-10 rounded-[28px] border border-[#FFE1A6] bg-white p-5 shadow-xl shadow-[#D95B48]/10">
+          <div className="relative mx-4 mt-6 rounded-[28px] border border-[#FFE1A6] bg-white p-5 shadow-xl shadow-[#D95B48]/10">
             <div className="rounded-3xl bg-[#FFF4CF] px-4 py-3 text-center">
               <p className="text-sm font-bold text-[#623B16]">
                 Toca una estrella
