@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { RatingCopy } from "@/lib/rating-copy";
 
@@ -21,14 +22,27 @@ type Client = {
 export default function ClientEditForm({
   client,
   ratingSettings,
+  qrUrl,
 }: {
   client: Client;
   ratingSettings: RatingCopy;
+  qrUrl: string;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function copyQrUrl() {
+    try {
+      await navigator.clipboard.writeText(qrUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,6 +83,35 @@ export default function ClientEditForm({
 
   return (
     <form onSubmit={handleSubmit} className="rounded-2xl border bg-white p-6">
+      <div className="sticky top-3 z-20 mb-5 rounded-2xl border border-[#203126]/10 bg-white/95 p-3 shadow-xl shadow-[#203126]/10 backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-green-700">
+              Evaluación pública
+            </p>
+            <p className="max-w-[18rem] truncate text-sm font-semibold text-neutral-800 sm:max-w-md">
+              {qrUrl}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={qrUrl}
+              target="_blank"
+              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-black text-white"
+            >
+              Abrir evaluación
+            </a>
+            <button
+              type="button"
+              onClick={copyQrUrl}
+              className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-black text-neutral-800"
+            >
+              {copied ? "Copiado" : "Copiar enlace"}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-neutral-900">Editar cliente</h2>
@@ -139,6 +182,22 @@ export default function ClientEditForm({
         </label>
         <label className="text-sm text-neutral-600 sm:col-span-2">
           Logo redondo
+          {client.logo_url && (
+            <div className="mt-2 flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+              <Image
+                src={client.logo_url}
+                alt={client.name}
+                width={56}
+                height={56}
+                className="h-14 w-14 rounded-full bg-white object-contain p-1"
+                unoptimized
+              />
+              <label className="flex items-center gap-2 text-xs font-bold text-red-600">
+                <input name="remove_logo" value="1" type="checkbox" />
+                Quitar logo actual al guardar
+              </label>
+            </div>
+          )}
           <input
             name="logo"
             type="file"
@@ -151,6 +210,22 @@ export default function ClientEditForm({
         </label>
         <label className="text-sm text-neutral-600 sm:col-span-2">
           Banner horizontal de la empresa
+          {client.banner_url && (
+            <div className="mt-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+              <Image
+                src={client.banner_url}
+                alt={`Banner de ${client.name}`}
+                width={640}
+                height={220}
+                className="h-28 w-full rounded-lg object-cover"
+                unoptimized
+              />
+              <label className="mt-2 flex items-center gap-2 text-xs font-bold text-red-600">
+                <input name="remove_banner" value="1" type="checkbox" />
+                Quitar banner actual al guardar
+              </label>
+            </div>
+          )}
           <input
             name="banner"
             type="file"

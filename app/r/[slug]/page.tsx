@@ -5,9 +5,8 @@ import { defaultRatingCopy, normalizeRatingCopy, type RatingCopy } from "@/lib/r
 import { supabaseAnon } from "@/lib/supabase";
 import RatingStars from "@/components/RatingStars";
 
-// La landing es el destino del QR: se abre desde móvil y tiene que
-// cargar rápido. Server component, sin JS innecesario.
-export const revalidate = 60;
+// La landing del QR tiene que reflejar cambios de marca al momento.
+export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -52,6 +51,18 @@ async function getRatingCopy(businessId: string | undefined): Promise<RatingCopy
   if (!businessId) return defaultRatingCopy;
 
   const supabase = supabaseAnon();
+  async function getStoredCopy() {
+    const { data } = await supabase.storage
+      .from("logos")
+      .download(`rating-settings-${businessId}.json`);
+    if (!data) return null;
+    try {
+      return JSON.parse(await data.text()) as Partial<RatingCopy>;
+    } catch {
+      return null;
+    }
+  }
+
   const fields =
     "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
   const fallbackFields =
@@ -70,10 +81,10 @@ async function getRatingCopy(businessId: string | undefined): Promise<RatingCopy
       .eq("business_id", businessId)
       .maybeSingle();
 
-    return normalizeRatingCopy(fallback.data);
+    return normalizeRatingCopy(fallback.data ?? (await getStoredCopy()));
   }
 
-  return normalizeRatingCopy(data);
+  return normalizeRatingCopy(data ?? (await getStoredCopy()));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

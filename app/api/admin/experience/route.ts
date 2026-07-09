@@ -68,6 +68,20 @@ async function uploadBusinessImage({
   return admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
 }
 
+async function saveRatingSettingsSnapshot(
+  businessId: string,
+  settings: Record<string, unknown>
+) {
+  const payload = Buffer.from(JSON.stringify(settings), "utf8");
+  await supabaseAdmin()
+    .storage
+    .from("logos")
+    .upload(`rating-settings-${businessId}.json`, payload, {
+      contentType: "application/json",
+      upsert: true,
+    });
+}
+
 async function getAccessibleBusinessIds(user: { id: string; email?: string | null }) {
   const admin = supabaseAdmin();
   const email = user.email?.trim();
@@ -156,6 +170,11 @@ export async function PATCH(req: NextRequest) {
       email_owner: String(form.get("email_owner") ?? "").trim() || null,
     };
     if (color) update.color_primary = color;
+    if (form.get("remove_logo") === "1") update.logo_url = null;
+    if (form.get("remove_banner") === "1") {
+      update.banner_url = null;
+      await admin.storage.from("logos").remove([`banner-${business.slug}`]);
+    }
 
     const logo = form.get("logo");
     if (logo && logo instanceof File && logo.size > 0) {
@@ -220,6 +239,7 @@ export async function PATCH(req: NextRequest) {
       cleanChoice(form.get("visual_theme"), ["sunrise", "hope", "coral"]) || "sunrise";
     settings.logo_display =
       cleanChoice(form.get("logo_display"), ["large", "compact"]) || "large";
+    await saveRatingSettingsSnapshot(businessId, settings);
 
     const { error: settingsError } = await admin
       .from("business_rating_settings")
@@ -227,10 +247,7 @@ export async function PATCH(req: NextRequest) {
 
     if (settingsError) {
       if (isMissingSettingsSchema(settingsError)) {
-        return NextResponse.json({
-          ok: true,
-          warning: "settings_schema_missing",
-        });
+        return NextResponse.json({ ok: true, ...(warning ? { warning } : {}) });
       }
       return NextResponse.json(
         { error: "Datos guardados, pero no se pudo guardar la experiencia QR." },

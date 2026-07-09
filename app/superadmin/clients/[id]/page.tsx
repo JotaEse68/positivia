@@ -41,6 +41,37 @@ export default async function ClientDetailPage({
   const b = initialBusiness ?? fallbackBusiness?.data;
 
   if (!b) notFound();
+  const businessId = b.id;
+
+  async function getStoredBannerUrl(slug: string) {
+    const { data, error } = await supabaseAdmin()
+      .storage
+      .from("logos")
+      .list("", { search: `banner-${slug}`, limit: 1 });
+
+    if (error || !data?.some((item) => item.name === `banner-${slug}`)) return null;
+    return supabaseAdmin().storage.from("logos").getPublicUrl(`banner-${slug}`).data.publicUrl;
+  }
+
+  const businessForForm = {
+    ...b,
+    banner_url:
+      ("banner_url" in b && typeof b.banner_url === "string" ? b.banner_url : null) ??
+      (await getStoredBannerUrl(b.slug)),
+  };
+
+  async function getStoredRatingSettings() {
+    const { data } = await supabaseAdmin()
+      .storage
+      .from("logos")
+      .download(`rating-settings-${businessId}.json`);
+    if (!data) return null;
+    try {
+      return JSON.parse(await data.text());
+    } catch {
+      return null;
+    }
+  }
 
   const { data: ratingSettings } = await supabaseAdmin()
     .from("business_rating_settings")
@@ -49,6 +80,9 @@ export default async function ClientDetailPage({
     )
     .eq("business_id", b.id)
     .maybeSingle();
+  const normalizedSettings = normalizeRatingCopy(
+    ratingSettings ?? (await getStoredRatingSettings())
+  );
 
   const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "";
   const landingUrl = `${base}/r/${b.slug}`;
@@ -90,7 +124,11 @@ export default async function ClientDetailPage({
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
-          <ClientEditForm client={b} ratingSettings={normalizeRatingCopy(ratingSettings)} />
+          <ClientEditForm
+            client={businessForForm}
+            ratingSettings={normalizedSettings}
+            qrUrl={landingUrl}
+          />
 
           <aside className="space-y-5">
             <section className="rounded-2xl border bg-white p-5 text-center">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import BusinessExperienceForm from "@/components/BusinessExperienceForm";
-import { defaultRatingCopy, normalizeRatingCopy } from "@/lib/rating-copy";
+import { normalizeRatingCopy } from "@/lib/rating-copy";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isSuperadminUser } from "@/lib/superadmin";
@@ -47,6 +47,18 @@ async function linkBusinessesForCurrentUser(user: { id: string; email?: string |
 type SupabaseClientLike = Awaited<ReturnType<typeof createServerSupabase>> | ReturnType<typeof supabaseAdmin>;
 
 async function getRatingSettings(supabase: SupabaseClientLike, businessId: string) {
+  async function getStoredCopy() {
+    const { data } = await supabase.storage
+      .from("logos")
+      .download(`rating-settings-${businessId}.json`);
+    if (!data) return null;
+    try {
+      return JSON.parse(await data.text());
+    } catch {
+      return null;
+    }
+  }
+
   const fields =
     "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
   const fallbackFields =
@@ -58,8 +70,8 @@ async function getRatingSettings(supabase: SupabaseClientLike, businessId: strin
     .eq("business_id", businessId)
     .maybeSingle();
 
-  if (!error) return normalizeRatingCopy(data);
-  if (error.code !== "42703") return defaultRatingCopy;
+  if (!error) return normalizeRatingCopy(data ?? (await getStoredCopy()));
+  if (error.code !== "42703") return normalizeRatingCopy(await getStoredCopy());
 
   const fallback = await supabase
     .from("business_rating_settings")
@@ -67,7 +79,16 @@ async function getRatingSettings(supabase: SupabaseClientLike, businessId: strin
     .eq("business_id", businessId)
     .maybeSingle();
 
-  return normalizeRatingCopy(fallback.data);
+  return normalizeRatingCopy(fallback.data ?? (await getStoredCopy()));
+}
+
+async function getStoredBannerUrl(supabase: SupabaseClientLike, slug: string) {
+  const { data, error } = await supabase.storage
+    .from("logos")
+    .list("", { search: `banner-${slug}`, limit: 1 });
+
+  if (error || !data?.some((item) => item.name === `banner-${slug}`)) return null;
+  return supabase.storage.from("logos").getPublicUrl(`banner-${slug}`).data.publicUrl;
 }
 
 export default async function ExperiencePage({
@@ -119,6 +140,10 @@ export default async function ExperiencePage({
 
   const selected = list.find((business) => business.id === query.b) ?? list[0];
   const ratingSettings = await getRatingSettings(db, selected.id);
+  const selectedWithStoredBanner = {
+    ...selected,
+    banner_url: selected.banner_url ?? (await getStoredBannerUrl(db, selected.slug)),
+  };
   const headersList = await headers();
   const host = headersList.get("host") ?? "positivia.vercel.app";
   const proto = headersList.get("x-forwarded-proto") ?? "https";
@@ -174,7 +199,7 @@ export default async function ExperiencePage({
       )}
 
       <BusinessExperienceForm
-        business={selected}
+        business={selectedWithStoredBanner}
         ratingSettings={ratingSettings}
         qrUrl={qrUrl}
       />

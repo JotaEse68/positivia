@@ -76,6 +76,42 @@ export default function BusinessExperienceForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="sticky top-3 z-20 rounded-2xl border border-[#203126]/10 bg-white/95 p-3 shadow-xl shadow-[#203126]/10 backdrop-blur">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-[#1F7A4E]">
+              Enlace de evaluación
+            </p>
+            <p className="max-w-[18rem] truncate text-sm font-semibold text-neutral-800 sm:max-w-md">
+              {qrUrl}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={qrUrl}
+              target="_blank"
+              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-black text-white"
+            >
+              Abrir evaluación
+            </a>
+            <button
+              type="button"
+              onClick={copyQrUrl}
+              className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-black text-neutral-800"
+            >
+              {copied ? "Copiado" : "Copiar enlace"}
+            </button>
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-lg bg-[#24A66D] px-4 py-2 text-sm font-black text-white disabled:opacity-60"
+            >
+              {busy ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
         <div className="bg-gradient-to-br from-[#FFBE4D] via-[#FF7D66] to-[#24A66D] p-5 text-white">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-white/75">
@@ -209,6 +245,22 @@ export default function BusinessExperienceForm({
           </label>
           <label className={label}>
             Logo redondo
+            {business.logo_url && (
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+                <Image
+                  src={business.logo_url}
+                  alt={business.name}
+                  width={56}
+                  height={56}
+                  className="h-14 w-14 rounded-full bg-white object-contain p-1"
+                  unoptimized
+                />
+                <label className="flex items-center gap-2 text-xs font-bold text-red-600">
+                  <input name="remove_logo" value="1" type="checkbox" />
+                  Quitar logo actual al guardar
+                </label>
+              </div>
+            )}
             <input
               name="logo"
               type="file"
@@ -221,6 +273,22 @@ export default function BusinessExperienceForm({
           </label>
           <label className={`${label} sm:col-span-2`}>
             Banner horizontal de la empresa
+            {business.banner_url && (
+              <div className="mt-2 rounded-xl border border-neutral-200 bg-neutral-50 p-3">
+                <Image
+                  src={business.banner_url}
+                  alt={`Banner de ${business.name}`}
+                  width={640}
+                  height={220}
+                  className="h-28 w-full rounded-lg object-cover"
+                  unoptimized
+                />
+                <label className="mt-2 flex items-center gap-2 text-xs font-bold text-red-600">
+                  <input name="remove_banner" value="1" type="checkbox" />
+                  Quitar banner actual al guardar
+                </label>
+              </div>
+            )}
             <input
               name="banner"
               type="file"

@@ -67,6 +67,20 @@ async function uploadBusinessImage({
   return admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
 }
 
+async function saveRatingSettingsSnapshot(
+  businessId: string,
+  settings: Record<string, unknown>
+) {
+  const payload = Buffer.from(JSON.stringify(settings), "utf8");
+  await supabaseAdmin()
+    .storage
+    .from("logos")
+    .upload(`rating-settings-${businessId}.json`, payload, {
+      contentType: "application/json",
+      upsert: true,
+    });
+}
+
 // Alta de un cliente (negocio). Solo superadmin. Sube el logo a Storage y crea
 // la fila en businesses. Opcionalmente vincula a un parent_business_id (local
 // adicional de una cadena bajo un Pro base).
@@ -222,6 +236,13 @@ export async function PATCH(req: NextRequest) {
     ) {
       update.plan_status = planStatusValue;
     }
+    if (read("remove_logo") === "1") update.logo_url = null;
+    if (read("remove_banner") === "1") {
+      update.banner_url = null;
+      const currentSlug =
+        typeof update.slug === "string" ? update.slug : `cliente-${id.slice(0, 8)}`;
+      await supabaseAdmin().storage.from("logos").remove([`banner-${currentSlug}`]);
+    }
 
     const logo = form?.get("logo");
     if (logo && logo instanceof File && logo.size > 0) {
@@ -309,6 +330,7 @@ export async function PATCH(req: NextRequest) {
           form ? form.get("logo_display") : body.rating_settings.logo_display,
           ["large", "compact"]
         ) || "large";
+      await saveRatingSettingsSnapshot(id, settings);
 
       const { error: settingsError } = await admin
         .from("business_rating_settings")
@@ -319,7 +341,7 @@ export async function PATCH(req: NextRequest) {
           return NextResponse.json({
             ok: true,
             slug: update.slug ?? null,
-            warning: warning ?? "rating_settings_table_missing",
+            ...(warning ? { warning } : {}),
           });
         }
 
