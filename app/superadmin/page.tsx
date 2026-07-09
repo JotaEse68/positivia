@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getSuperadmin } from "@/lib/superadmin";
 import { supabaseAdmin } from "@/lib/supabase";
 import NewClientForm from "@/components/NewClientForm";
@@ -155,8 +156,15 @@ export default async function SuperadminPage() {
     <div className="min-h-screen bg-[#F6F7F3]">
       <header className="border-b border-[#203126]/10 bg-[#203126]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <span className="text-lg font-bold text-white">
-            Positiv<span className="text-green-400">IA</span>{" "}
+          <span className="flex items-center gap-2 text-lg font-bold text-white">
+            <Image
+              src="/brand/positivia-app-icon.png"
+              alt="PositivIA"
+              width={96}
+              height={96}
+              className="h-9 w-9 rounded-xl object-cover"
+            />
+            <span>Positiv<span className="text-green-400">IA</span></span>{" "}
             <span className="text-xs font-normal text-neutral-400">superadmin</span>
           </span>
           <LogoutButton />
@@ -166,6 +174,13 @@ export default async function SuperadminPage() {
       <main className="mx-auto max-w-5xl px-4 py-8">
         <section className="mb-6 overflow-hidden rounded-2xl border border-[#203126]/10 bg-white shadow-sm">
           <div className="bg-gradient-to-br from-[#FFBE4D] via-[#FF7D66] to-[#24A66D] p-6 text-white">
+            <Image
+              src="/brand/positivia-logo-dark.png"
+              alt="PositivIA"
+              width={612}
+              height={292}
+              className="mb-5 h-auto w-full max-w-sm rounded-2xl shadow-[0_18px_50px_rgba(0,0,0,0.2)]"
+            />
             <p className="text-xs font-black uppercase tracking-[0.18em] text-white/75">
               Cabina general
             </p>

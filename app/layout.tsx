@@ -16,6 +16,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "PositivIA",
   description: "La IA que protege tu reputación antes de que sea tarde.",
+  icons: {
+    icon: "/brand/positivia-app-icon.png",
+    shortcut: "/brand/positivia-app-icon.png",
+    apple: "/brand/positivia-app-icon.png",
+  },
 };
 
 export default function RootLayout({

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Fraunces, Schibsted_Grotesk } from "next/font/google";
 
 const display = Fraunces({
@@ -71,9 +72,13 @@ export default function Home() {
 
         <header className="flex flex-col gap-4 rounded-[28px] border border-[#102D2A]/10 bg-white/70 p-4 shadow-[0_20px_80px_rgba(25,55,42,0.08)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[#102D2A] text-lg font-black text-[#F6C64E]">
-              P
-            </span>
+            <Image
+              src="/brand/positivia-app-icon.png"
+              alt="PositivIA"
+              width={96}
+              height={96}
+              className="h-12 w-12 rounded-2xl object-cover shadow-sm"
+            />
             <span>
               <span className="block text-xl font-black tracking-tight">PositivIA</span>
               <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-[#27765B]">
@@ -100,6 +105,13 @@ export default function Home() {
         <div className="grid flex-1 gap-7 py-7 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
           <section className="flex min-h-[420px] flex-col justify-between rounded-[36px] bg-[#102D2A] p-6 text-white shadow-[0_30px_100px_rgba(16,45,42,0.24)] sm:p-8 lg:p-10">
             <div>
+              <Image
+                src="/brand/positivia-logo-dark.png"
+                alt="PositivIA"
+                width={612}
+                height={292}
+                className="mb-7 h-auto w-full max-w-[420px] rounded-[22px] object-contain shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+              />
               <p className="inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#F6C64E]">
                 Ya no es landing
               </p>
