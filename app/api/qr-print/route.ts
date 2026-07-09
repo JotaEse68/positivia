@@ -38,21 +38,98 @@ function rect(x: number, y: number, w: number, h: number, color: string) {
   return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg ${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f\n`;
 }
 
+function strokeRect(x: number, y: number, w: number, h: number, color: string, width = 1) {
+  const { r, g, b } = hexToRgb(color);
+  return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} RG ${width.toFixed(2)} w ${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S\n`;
+}
+
+function line(x1: number, y1: number, x2: number, y2: number, color: string, width = 1) {
+  const { r, g, b } = hexToRgb(color);
+  return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} RG ${width.toFixed(2)} w ${x1.toFixed(2)} ${y1.toFixed(2)} m ${x2.toFixed(2)} ${y2.toFixed(2)} l S\n`;
+}
+
+function fit(value: string, max = 44) {
+  const clean = value.trim();
+  return clean.length > max ? `${clean.slice(0, max - 1)}.` : clean;
+}
+
 function text({
   value,
   x,
   y,
   size,
   color = "#203126",
+  font = "F1",
 }: {
   value: string;
   x: number;
   y: number;
   size: number;
   color?: string;
+  font?: "F1" | "F2";
 }) {
   const { r, g, b } = hexToRgb(color);
-  return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg BT /F1 ${size.toFixed(2)} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${pdfText(value)}) Tj ET\n`;
+  return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg BT /${font} ${size.toFixed(2)} Tf ${x.toFixed(2)} ${y.toFixed(2)} Td (${pdfText(value)}) Tj ET\n`;
+}
+
+function textCenter({
+  value,
+  centerX,
+  y,
+  size,
+  color = "#203126",
+  font = "F1",
+}: {
+  value: string;
+  centerX: number;
+  y: number;
+  size: number;
+  color?: string;
+  font?: "F1" | "F2";
+}) {
+  const clean = pdfText(value);
+  const approx = clean.length * size * (font === "F2" ? 0.56 : 0.52);
+  return text({ value: clean, x: centerX - approx / 2, y, size, color, font });
+}
+
+function starPath(cx: number, cy: number, outer: number, color = "#F6C64E") {
+  const { r, g, b } = hexToRgb(color);
+  const inner = outer * 0.45;
+  const points = Array.from({ length: 10 }).map((_, i) => {
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    const radius = i % 2 === 0 ? outer : inner;
+    return {
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius,
+    };
+  });
+
+  return `${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} rg ${points
+    .map((p, i) => `${p.x.toFixed(2)} ${p.y.toFixed(2)} ${i === 0 ? "m" : "l"}`)
+    .join(" ")} h f\n`;
+}
+
+function stars(x: number, y: number, size: number, gap: number, color = "#F6C64E") {
+  let out = "";
+  for (let i = 0; i < 5; i += 1) {
+    out += starPath(x + i * gap, y, size / 2, color);
+  }
+  return out;
+}
+
+function cutMarks(w: number, h: number, inset: number) {
+  const len = 16;
+  const c = "#B7B7B7";
+  return [
+    line(inset, h - inset, inset + len, h - inset, c, 0.6),
+    line(inset, h - inset, inset, h - inset - len, c, 0.6),
+    line(w - inset, h - inset, w - inset - len, h - inset, c, 0.6),
+    line(w - inset, h - inset, w - inset, h - inset - len, c, 0.6),
+    line(inset, inset, inset + len, inset, c, 0.6),
+    line(inset, inset, inset, inset + len, c, 0.6),
+    line(w - inset, inset, w - inset - len, inset, c, 0.6),
+    line(w - inset, inset, w - inset, inset + len, c, 0.6),
+  ].join("");
 }
 
 function qrCommands(target: string, x: number, y: number, size: number) {
@@ -77,8 +154,9 @@ function buildPdf(content: string, width: number, height: number) {
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
     "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width.toFixed(2)} ${height.toFixed(2)}] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>`,
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width.toFixed(2)} ${height.toFixed(2)}] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>`,
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
     `<< /Length ${Buffer.byteLength(content, "utf8")} >>\nstream\n${content}endstream`,
   ];
 
@@ -133,6 +211,7 @@ export async function GET(req: NextRequest) {
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || req.nextUrl.origin;
     const target = `${base}/r/${business.slug}`;
     const brand = business.color_primary ?? "#24A66D";
+    const businessName = fit(business.name, 36);
     const margin = page.w * 0.08;
     const contentW = page.w - margin * 2;
     let content = "";
@@ -142,124 +221,155 @@ export async function GET(req: NextRequest) {
       const x = (page.w - qrSize) / 2;
       const y = (page.h - qrSize) / 2 + 20;
       content += rect(0, 0, page.w, page.h, "#FFFFFF");
+      content += cutMarks(page.w, page.h, margin * 0.48);
+      content += strokeRect(x - 20, y - 20, qrSize + 40, qrSize + 40, "#E4E4E4", 1.2);
       content += qrCommands(target, x, y, qrSize);
-      content += text({
-        value: business.name,
-        x: margin,
+      content += textCenter({
+        value: businessName,
+        centerX: page.w / 2,
         y: margin + 34,
-        size: 22,
+        size: 24,
         color: "#203126",
+        font: "F2",
       });
-      content += text({
+      content += textCenter({
         value: target.replace(/^https?:\/\//, ""),
-        x: margin,
+        centerX: page.w / 2,
         y: margin,
         size: 10,
         color: "#8A6B3E",
       });
     } else if (layout === "ticket" || layout === "table") {
       const isTicket = layout === "ticket";
-      const headerH = isTicket ? 80 : 104;
-      const qrSize = Math.min(contentW * (isTicket ? 0.82 : 0.74), page.h * 0.48);
+      const headerH = isTicket ? 92 : 116;
+      const qrSize = Math.min(contentW * (isTicket ? 0.84 : 0.72), page.h * 0.45);
       const qrX = (page.w - qrSize) / 2;
-      const qrY = isTicket ? 130 : 132;
+      const qrY = isTicket ? 128 : 136;
+      const cardX = margin * 0.62;
+      const cardW = page.w - cardX * 2;
 
-      content += rect(0, 0, page.w, page.h, "#FFFFFF");
+      content += rect(0, 0, page.w, page.h, isTicket ? "#FFFFFF" : "#FFF8E7");
+      content += cutMarks(page.w, page.h, isTicket ? 10 : 16);
       content += rect(0, page.h - headerH, page.w, headerH, brand);
+      content += rect(0, page.h - headerH - 16, page.w, 16, "#F6C64E");
       content += text({
-        value: isTicket ? "Tu opinion nos ayuda" : "Escanea y cuentanos como fue",
+        value: isTicket ? "TU OPINION NOS AYUDA" : "TU VISITA CUENTA",
         x: margin,
-        y: page.h - 34,
-        size: isTicket ? 15 : 18,
+        y: page.h - 31,
+        size: isTicket ? 12 : 16,
         color: "#FFFFFF",
+        font: "F2",
       });
       content += text({
-        value: business.name,
+        value: businessName,
         x: margin,
-        y: page.h - 62,
-        size: isTicket ? 22 : 27,
+        y: page.h - 64,
+        size: isTicket ? 21 : 28,
+        color: "#FFFFFF",
+        font: "F2",
+      });
+      content += text({
+        value: isTicket ? "Escanea antes de irte" : "Escanea y dinos como te fuiste",
+        x: margin,
+        y: page.h - (isTicket ? 86 : 94),
+        size: isTicket ? 9.5 : 12,
         color: "#FFFFFF",
       });
+      content += rect(cardX, qrY - 18, cardW, qrSize + 36, "#FFFFFF");
+      content += strokeRect(cardX, qrY - 18, cardW, qrSize + 36, "#F0D89A", 1);
       content += qrCommands(target, qrX, qrY, qrSize);
-      content += text({
-        value: "Un toque. Sin registro.",
-        x: margin,
-        y: isTicket ? 86 : 82,
-        size: isTicket ? 12 : 15,
+      content += stars((page.w - (isTicket ? 82 : 108)) / 2, isTicket ? 91 : 91, isTicket ? 18 : 23, isTicket ? 17 : 22);
+      content += textCenter({
+        value: "Un toque y listo",
+        centerX: page.w / 2,
+        y: isTicket ? 69 : 66,
+        size: isTicket ? 12 : 16,
         color: "#203126",
+        font: "F2",
       });
-      content += text({
-        value: "Si algo fallo, llega privado al responsable.",
-        x: margin,
-        y: isTicket ? 62 : 56,
-        size: isTicket ? 8.5 : 10,
+      content += textCenter({
+        value: "Si algo fallo, lo lee el responsable.",
+        centerX: page.w / 2,
+        y: isTicket ? 49 : 43,
+        size: isTicket ? 8.2 : 10,
         color: "#337257",
       });
-      content += text({
+      content += textCenter({
         value: target.replace(/^https?:\/\//, ""),
-        x: margin,
+        centerX: page.w / 2,
         y: 26,
         size: isTicket ? 7 : 8,
         color: "#8A6B3E",
       });
     } else {
-      const headerH = page.h * 0.24;
-      const qrSize = Math.min(contentW * 0.72, page.h * 0.43);
+      const isA3 = page.w > 700;
+      const headerH = page.h * 0.25;
+      const qrSize = Math.min(contentW * 0.68, page.h * 0.39);
       const qrX = (page.w - qrSize) / 2;
-      const qrY = page.h * 0.22;
+      const qrY = page.h * 0.25;
+      const frame = margin * 0.54;
 
       content += rect(0, 0, page.w, page.h, "#FFF8E7");
-      content += rect(margin * 0.55, margin * 0.55, page.w - margin * 1.1, page.h - margin * 1.1, "#FFFFFF");
+      content += cutMarks(page.w, page.h, frame);
+      content += rect(frame, frame, page.w - frame * 2, page.h - frame * 2, "#FFFFFF");
+      content += strokeRect(frame, frame, page.w - frame * 2, page.h - frame * 2, "#F0D89A", 1.2);
       content += rect(margin, page.h - margin - headerH, contentW, headerH, brand);
+      content += rect(margin, page.h - margin - headerH, contentW, 18, "#F6C64E");
       content += text({
-        value: "TU OPINION NOS AYUDA",
+        value: "TU OPINION NOS AYUDA A CUIDARTE MEJOR",
         x: margin + 28,
         y: page.h - margin - 58,
-        size: page.w > 700 ? 26 : 18,
+        size: isA3 ? 24 : 16,
         color: "#FFFFFF",
+        font: "F2",
       });
       content += text({
-        value: business.name,
+        value: businessName,
         x: margin + 28,
         y: page.h - margin - 118,
-        size: page.w > 700 ? 46 : 32,
+        size: isA3 ? 48 : 33,
         color: "#FFFFFF",
+        font: "F2",
       });
       content += text({
-        value: "Escanea y dinos como fue tu visita",
+        value: "Escanea y cuentanos como te fuiste",
         x: margin + 28,
         y: page.h - margin - 166,
-        size: page.w > 700 ? 28 : 20,
+        size: isA3 ? 28 : 20,
         color: "#FFFFFF",
+        font: "F2",
       });
       content += text({
-        value: "Sin registrarte. En menos de 20 segundos.",
+        value: "Sin cuenta. Sin descargar nada. En menos de 20 segundos.",
         x: margin + 28,
         y: page.h - margin - 205,
-        size: page.w > 700 ? 18 : 13,
+        size: isA3 ? 17 : 12,
         color: "#FFFFFF",
       });
 
-      content += rect(qrX - 18, qrY - 18, qrSize + 36, qrSize + 36, "#203126");
+      content += rect(qrX - 28, qrY - 28, qrSize + 56, qrSize + 56, "#102D2A");
+      content += rect(qrX - 16, qrY - 16, qrSize + 32, qrSize + 32, "#FFFFFF");
       content += qrCommands(target, qrX, qrY, qrSize);
-      content += rect(margin * 1.55, margin * 1.55, page.w - margin * 3.1, 72, "#EAF9EF");
-      content += text({
-        value: "Elige como te fuiste",
-        x: margin * 1.9,
-        y: margin * 1.55 + 43,
-        size: page.w > 700 ? 24 : 18,
+      content += rect(margin * 1.35, margin * 1.35, page.w - margin * 2.7, isA3 ? 105 : 84, "#EAF9EF");
+      content += stars(page.w / 2 - (isA3 ? 72 : 55), margin * 1.35 + (isA3 ? 127 : 104), isA3 ? 30 : 23, isA3 ? 34 : 27);
+      content += textCenter({
+        value: "Elige una estrella y listo",
+        centerX: page.w / 2,
+        y: margin * 1.35 + (isA3 ? 65 : 51),
+        size: isA3 ? 25 : 18,
         color: "#1F7A4E",
+        font: "F2",
       });
-      content += text({
-        value: "Si algo fallo, llega privado al responsable.",
-        x: margin * 1.9,
-        y: margin * 1.55 + 18,
-        size: page.w > 700 ? 16 : 11,
+      content += textCenter({
+        value: "Si algo fallo, lo recibe el responsable para poder arreglarlo.",
+        centerX: page.w / 2,
+        y: margin * 1.35 + (isA3 ? 34 : 27),
+        size: isA3 ? 14 : 10,
         color: "#337257",
       });
-      content += text({
+      content += textCenter({
         value: target.replace(/^https?:\/\//, ""),
-        x: margin,
+        centerX: page.w / 2,
         y: margin * 0.85,
         size: 10,
         color: "#8A6B3E",
