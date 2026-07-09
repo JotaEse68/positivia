@@ -13,8 +13,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
-    "@clerk/localizations": "^4.13.0",
-    "@clerk/nextjs": "^6.39.5",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.1",
     "next": "^16.2.10",

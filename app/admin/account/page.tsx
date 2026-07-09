@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { currentUser } from "@clerk/nextjs/server";
 import PasswordResetForm from "@/components/PasswordResetForm";
+import { createServerSupabase } from "@/lib/supabase-server";
 
 export default async function AccountPage() {
-  const user = await currentUser();
-  const email = user?.emailAddresses?.[0]?.emailAddress ?? "";
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const email = user?.email ?? "";
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -16,7 +19,7 @@ export default async function AccountPage() {
           Acceso y contraseña
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-neutral-500">
-          Clerk solo gestiona el login. El WhatsApp del negocio se cambia en la
+          Supabase gestiona el login. El WhatsApp del negocio se cambia en la
           ficha del cliente, no en el teléfono de la cuenta.
         </p>
       </div>

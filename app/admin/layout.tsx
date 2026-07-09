@@ -1,19 +1,20 @@
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
-import { UserButton } from "@clerk/nextjs";
+import LogoutButton from "@/components/LogoutButton";
+import { createServerSupabase } from "@/lib/supabase-server";
 
-// Layout del área admin. El guard (redirección a login) lo hace middleware.ts
-// con Clerk. Aquí pintamos la cabecera con el botón de usuario de Clerk.
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userId } = await auth();
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   return (
     <div className="min-h-screen bg-neutral-100">
-      {userId && (
+      {user && (
         <header className="border-b bg-white">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
             <div className="flex items-center gap-4">
@@ -24,7 +25,7 @@ export default async function AdminLayout({
                 Cuenta
               </Link>
             </div>
-            <UserButton userProfileUrl="/admin/account" />
+            <LogoutButton />
           </div>
         </header>
       )}

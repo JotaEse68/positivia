@@ -53,9 +53,9 @@ create index idx_feedback_business_created on feedback (business_id, created_at 
 create index idx_feedback_business_status on feedback (business_id, status);
 
 -- ---------- admin_users ----------
--- Vincula usuarios de Clerk (clerk_user_id) con el negocio que administran.
--- La autenticación la hace Clerk; Supabase valida su token vía third-party
--- auth y el RLS usa auth.jwt()->>'sub' (el user id de Clerk).
+-- Vincula usuarios de Supabase Auth con el negocio que administran.
+-- `clerk_user_id` es el nombre heredado de la columna; ahora guarda
+-- auth.users.id y el RLS usa auth.jwt()->>'sub' para aislar datos.
 create table admin_users (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,

@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 
 // Guarda la respuesta (posiblemente editada por el dueño) y marca la queja como
@@ -17,11 +16,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "feedbackId requerido" }, { status: 400 });
     }
 
-    const { userId } = await auth();
-    if (!userId) {
+    const supabase = await createServerSupabase();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: "no_auth" }, { status: 401 });
     }
-    const supabase = createServerSupabase();
 
     const update: Record<string, unknown> = { reply_sent: true };
     if (reply !== null) update.suggested_reply = reply;

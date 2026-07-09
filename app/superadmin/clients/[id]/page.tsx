@@ -1,10 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
 import { getSuperadmin } from "@/lib/superadmin";
 import { supabaseAdmin } from "@/lib/supabase";
 import ClientEditForm from "@/components/ClientEditForm";
+import LogoutButton from "@/components/LogoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ export default async function ClientDetailPage({
           <Link href="/superadmin" className="text-sm text-neutral-300 hover:text-white">
             ← Todos los clientes
           </Link>
-          <UserButton />
+          <LogoutButton />
         </div>
       </header>
 

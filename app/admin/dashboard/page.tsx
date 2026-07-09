@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { currentUser } from "@clerk/nextjs/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
 import AdminStatsCard from "@/components/AdminStatsCard";
@@ -15,9 +14,8 @@ type Business = {
   parent_business_id: string | null;
 };
 
-async function linkBusinessesForCurrentUser() {
-  const user = await currentUser();
-  const email = user?.emailAddresses?.[0]?.emailAddress?.trim();
+async function linkBusinessesForCurrentUser(user: { id: string; email?: string | null }) {
+  const email = user.email?.trim();
   if (!user?.id || !email) return;
 
   const admin = supabaseAdmin();
@@ -43,10 +41,13 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ b?: string }>;
 }) {
-  await linkBusinessesForCurrentUser();
   const query = await searchParams;
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const supabase = createServerSupabase();
+  if (user) await linkBusinessesForCurrentUser(user);
 
   // Negocios accesibles (RLS: los del dueño + sus locales hijos).
   const { data: businesses } = await supabase

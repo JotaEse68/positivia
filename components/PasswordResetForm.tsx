@@ -1,40 +1,38 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useSignIn } from "@clerk/nextjs";
+import { useState } from "react";
+import { createBrowserSupabase } from "@/lib/supabase-browser";
 
-type Step = "email" | "code" | "done";
+type Mode = "request" | "sent" | "update" | "done";
 
 function errorMessage(err: unknown) {
-  const clerkError = err as { errors?: { longMessage?: string; message?: string }[] };
-  return (
-    clerkError.errors?.[0]?.longMessage ??
-    clerkError.errors?.[0]?.message ??
-    "No se pudo completar la operación."
-  );
+  if (err instanceof Error) return err.message;
+  return "No se pudo completar la operación.";
 }
 
-export default function PasswordResetForm() {
-  const { isLoaded, signIn, setActive } = useSignIn();
-  const [step, setStep] = useState<Step>("email");
+export default function PasswordResetForm({
+  initialMode = "request",
+}: {
+  initialMode?: "request" | "update";
+}) {
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function requestCode(e: React.FormEvent<HTMLFormElement>) {
+  async function requestReset(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!isLoaded || !signIn) return;
     setBusy(true);
     setError(null);
     try {
-      await signIn.create({
-        strategy: "reset_password_email_code",
-        identifier: email.trim(),
+      const supabase = createBrowserSupabase();
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/auth/callback?next=/admin/reset-password?mode=update`,
       });
-      setStep("code");
+      if (error) throw error;
+      setMode("sent");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -42,30 +40,15 @@ export default function PasswordResetForm() {
     }
   }
 
-  async function resetPassword(e: React.FormEvent<HTMLFormElement>) {
+  async function updatePassword(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!isLoaded || !signIn) return;
     setBusy(true);
     setError(null);
     try {
-      const result = await signIn.attemptFirstFactor({
-        strategy: "reset_password_email_code",
-        code: code.trim(),
-        password,
-      });
-
-      if (result.status === "complete" && result.createdSessionId) {
-        await setActive({ session: result.createdSessionId });
-        setStep("done");
-        return;
-      }
-
-      if (result.status === "needs_second_factor") {
-        setError("Tu cuenta pide un segundo factor. Completa el acceso desde /admin/login.");
-        return;
-      }
-
-      setError("No se pudo completar el cambio. Revisa el código e inténtalo de nuevo.");
+      const supabase = createBrowserSupabase();
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      setMode("done");
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -76,18 +59,30 @@ export default function PasswordResetForm() {
   const input =
     "mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2.5 text-sm text-neutral-900 focus:border-green-500 focus:outline-none";
 
-  if (step === "done") {
+  if (mode === "sent") {
+    return (
+      <div className="rounded-2xl border bg-white p-6">
+        <h2 className="text-lg font-semibold text-neutral-900">Email enviado</h2>
+        <p className="mt-2 text-sm text-neutral-500">
+          Abre el enlace de recuperación que te hemos enviado. Te devolverá a
+          PositivIA para poner una contraseña nueva.
+        </p>
+      </div>
+    );
+  }
+
+  if (mode === "done") {
     return (
       <div className="rounded-2xl border bg-white p-6">
         <h2 className="text-lg font-semibold text-neutral-900">Contraseña cambiada</h2>
         <p className="mt-2 text-sm text-neutral-500">
-          Ya puedes volver al panel con tu sesión actual.
+          Ya puedes entrar con tu nueva contraseña.
         </p>
         <Link
-          href="/superadmin"
+          href="/admin/dashboard"
           className="mt-5 inline-block rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white"
         >
-          Ir al superadmin
+          Ir al panel
         </Link>
       </div>
     );
@@ -96,15 +91,38 @@ export default function PasswordResetForm() {
   return (
     <div className="rounded-2xl border bg-white p-6">
       <h2 className="text-lg font-semibold text-neutral-900">
-        Cambiar contraseña por email
+        {mode === "update" ? "Nueva contraseña" : "Recuperar contraseña"}
       </h2>
       <p className="mt-1 text-sm text-neutral-500">
-        Usa este flujo si no recuerdas la contraseña actual. Recibirás un código
-        en el correo de acceso.
+        {mode === "update"
+          ? "Escribe la contraseña nueva para tu cuenta."
+          : "Te enviaremos un enlace seguro al email de acceso."}
       </p>
 
-      {step === "email" ? (
-        <form onSubmit={requestCode} className="mt-5 space-y-4">
+      {mode === "update" ? (
+        <form onSubmit={updatePassword} className="mt-5 space-y-4">
+          <label className="block text-sm text-neutral-600">
+            Nueva contraseña
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              type="password"
+              minLength={8}
+              autoComplete="new-password"
+              className={input}
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {busy ? "Guardando..." : "Cambiar contraseña"}
+          </button>
+        </form>
+      ) : (
+        <form onSubmit={requestReset} className="mt-5 space-y-4">
           <label className="block text-sm text-neutral-600">
             Email de acceso
             <input
@@ -118,50 +136,10 @@ export default function PasswordResetForm() {
           </label>
           <button
             type="submit"
-            disabled={busy || !isLoaded}
+            disabled={busy}
             className="w-full rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {busy ? "Enviando código..." : "Enviar código"}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={resetPassword} className="mt-5 space-y-4">
-          <label className="block text-sm text-neutral-600">
-            Código recibido por email
-            <input
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              className={input}
-            />
-          </label>
-          <label className="block text-sm text-neutral-600">
-            Nueva contraseña
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              type="password"
-              autoComplete="new-password"
-              minLength={8}
-              className={input}
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={busy || !isLoaded}
-            className="w-full rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {busy ? "Cambiando..." : "Cambiar contraseña"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setStep("email")}
-            className="w-full rounded-lg border px-4 py-2.5 text-sm font-medium text-neutral-700"
-          >
-            Usar otro email
+            {busy ? "Enviando..." : "Enviar enlace"}
           </button>
         </form>
       )}

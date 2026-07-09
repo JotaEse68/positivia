@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import { getSuperadmin } from "@/lib/superadmin";
 import { supabaseAdmin } from "@/lib/supabase";
 import NewClientForm from "@/components/NewClientForm";
 import ClientStatusControls from "@/components/ClientStatusControls";
+import LogoutButton from "@/components/LogoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -146,7 +146,7 @@ export default async function SuperadminPage() {
             Positiv<span className="text-green-400">IA</span>{" "}
             <span className="text-xs font-normal text-neutral-400">superadmin</span>
           </span>
-          <UserButton />
+          <LogoutButton />
         </div>
       </header>
 

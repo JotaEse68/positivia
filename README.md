@@ -45,7 +45,7 @@ Todo se hace desde el **panel superadmin**, protegido por el email definido en
 `SUPERADMIN_EMAIL`.
 
 1. Entra en **`/admin/login`** e inicia sesión con el email superadmin
-   (recibirás un enlace mágico por correo — no hay contraseña).
+   usando contraseña o enlace mágico.
 2. Ve a **`/superadmin`** → **+ Nuevo cliente**.
 3. Rellena: nombre, *slug* (la URL, ej. `bar-pepe`), color de marca, logo
    (opcional, se sube solo), link de reseña de Google, WhatsApp y/o email del
@@ -67,8 +67,8 @@ El dueño accede a **`/admin/login`** con su email. Verá su dashboard con los
 KPIs (reseñas públicas generadas vs quejas interceptadas), la lista de quejas
 con la respuesta sugerida por IA (Pro) y los resúmenes semanales.
 
-El acceso se vincula automáticamente en el primer login si el email de Clerk
-coincide con `businesses.email_owner`. Si necesitas dar acceso a varias
+El acceso se vincula automáticamente en el primer login si el email de Supabase
+Auth coincide con `businesses.email_owner`. Si necesitas dar acceso a varias
 personas o usar otro email, añade una fila en `admin_users`.
 
 ---
@@ -82,7 +82,7 @@ npm run dev                  # http://localhost:3000
 ```
 
 Variables de entorno: ver **`.env.example`**. Mínimo para arrancar el producto
-real: Supabase, Clerk y `SUPERADMIN_EMAIL`. Las de Twilio/Resend/Anthropic
+real: Supabase Auth, Supabase Database y `SUPERADMIN_EMAIL`. Las de Twilio/Resend/Anthropic
 degradan limpio si faltan (el sistema no rompe, solo desactiva ese canal o
 feature). Para producción configura también `CRON_SECRET`.
 
@@ -110,7 +110,7 @@ Tailwind CSS · Anthropic (Claude Haiku) · Twilio / Resend · Vercel.
 ```
 app/
   r/[slug]           landing pública de valoración (destino del QR)
-  admin/             panel del dueño (auth magic link, guard por middleware)
+  admin/             panel del dueño (Supabase Auth, guard por middleware)
   demo/              demo pública para enseñar QR + dashboard sin login
   superadmin/        gestión global de clientes (gate por SUPERADMIN_EMAIL)
   api/
