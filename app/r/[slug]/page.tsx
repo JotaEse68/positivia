@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { getDemoBusiness } from "@/lib/demo";
+import { DEMO_SLUG, getDemoBusiness } from "@/lib/demo";
 import { defaultRatingCopy, normalizeRatingCopy, type RatingCopy } from "@/lib/rating-copy";
 import { supabaseAnon } from "@/lib/supabase";
 import RatingStars from "@/components/RatingStars";
@@ -11,10 +11,8 @@ export const dynamic = "force-dynamic";
 type Props = { params: Promise<{ slug: string }> };
 
 async function getBusiness(slug: string) {
-  const demo = getDemoBusiness(slug);
-  if (demo) return demo;
-
   const supabase = supabaseAnon();
+  const slugCandidates = slug === "demo" ? ["demo", DEMO_SLUG] : [slug];
   const fields =
     "id, slug, name, logo_url, banner_url, color_primary, google_review_link, plan_status";
   const fallbackFields =
@@ -22,19 +20,17 @@ async function getBusiness(slug: string) {
   const { data, error } = await supabase
     .from("businesses")
     .select(fields)
-    .eq("slug", slug)
-    .maybeSingle();
+    .in("slug", slugCandidates);
 
   if (error?.code === "42703") {
     const fallback = await supabase
       .from("businesses")
       .select(fallbackFields)
-      .eq("slug", slug)
-      .maybeSingle();
-    return fallback.data;
+      .in("slug", slugCandidates);
+    return fallback.data?.find((item) => item.slug === slug) ?? fallback.data?.[0] ?? getDemoBusiness(slug);
   }
 
-  return data;
+  return data?.find((item) => item.slug === slug) ?? data?.[0] ?? getDemoBusiness(slug);
 }
 
 async function getStoredBannerUrl(slug: string) {
