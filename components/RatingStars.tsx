@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 import ComplaintForm from "@/components/ComplaintForm";
+import type { RatingCopy } from "@/lib/rating-copy";
 
-type Props = { slug: string };
+type Props = {
+  slug: string;
+  googleReviewLink: string | null;
+  copy: RatingCopy;
+};
 
 // Bifurcación core del producto:
 //   4-5★ → se registra el feedback y se redirige a la reseña de Google.
 //   1-3★ → formulario privado; nunca llega a ser público.
-export default function RatingStars({ slug }: Props) {
+export default function RatingStars({ slug, googleReviewLink, copy }: Props) {
   const [rating, setRating] = useState<number | null>(null);
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState(false);
@@ -78,10 +83,10 @@ export default function RatingStars({ slug }: Props) {
           ✨
         </div>
         <p className="text-lg font-black text-[#1F7A4E]">
-          ¡Gracias por compartirlo!
+          {copy.positive_redirect_title}
         </p>
         <p className="mt-1 text-sm text-[#337257]">
-          Tu opinión ayuda mucho al negocio.
+          {copy.positive_redirect_body}
         </p>
       </div>
     );
@@ -94,17 +99,24 @@ export default function RatingStars({ slug }: Props) {
           ✨
         </div>
         <p className="animate-pulse text-lg font-black text-[#1F7A4E]">
-          Preparando tu reseña...
+          {copy.positive_redirect_title}
         </p>
         <p className="mt-1 text-sm text-[#337257]">
-          Te abrimos Google para que sea rápido.
+          {copy.positive_redirect_body}
         </p>
       </div>
     );
   }
 
   if (rating !== null && rating <= 3) {
-    return <ComplaintForm slug={slug} rating={rating} />;
+    return (
+      <ComplaintForm
+        slug={slug}
+        rating={rating}
+        googleReviewLink={googleReviewLink}
+        copy={copy}
+      />
+    );
   }
 
   return (

@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import type { RatingCopy } from "@/lib/rating-copy";
 
-type Props = { slug: string; rating: number };
+type Props = {
+  slug: string;
+  rating: number;
+  googleReviewLink: string | null;
+  copy: RatingCopy;
+};
 
 // Formulario privado para ratings 1-3. El mensaje deja claro al
 // cliente que esto NO es una reseña pública: va directo al dueño.
-export default function ComplaintForm({ slug, rating }: Props) {
+export default function ComplaintForm({ slug, rating, googleReviewLink, copy }: Props) {
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -33,12 +39,19 @@ export default function ComplaintForm({ slug, rating }: Props) {
           ✨
         </div>
         <p className="text-lg font-black text-[#1F7A4E]">
-          Gracias, de verdad
+          {copy.private_thanks_title}
         </p>
         <p className="mt-2 text-sm leading-6 text-[#337257]">
-          Esto no se publica. Llega directo al negocio para que pueda cuidarlo
-          mejor.
+          {copy.private_thanks_body}
         </p>
+        {googleReviewLink && (
+          <a
+            href={googleReviewLink}
+            className="mt-4 inline-flex rounded-3xl border border-[#24A66D]/25 bg-white px-4 py-2 text-sm font-black text-[#1F7A4E]"
+          >
+            También puedes publicar en Google
+          </a>
+        )}
       </div>
     );
   }
@@ -46,11 +59,13 @@ export default function ComplaintForm({ slug, rating }: Props) {
   return (
     <form onSubmit={handleSubmit} className="mt-6 text-left">
       <h2 className="text-center text-xl font-black text-[#322A20]">
-        Cuéntanos qué podemos mejorar
+        {copy.private_prompt_title}
       </h2>
       <p className="mt-2 text-center text-sm leading-6 text-[#6D5B49]">
-        Tu mensaje es <strong>privado</strong>. No se publica en Google ni en
-        ningún sitio.
+        {copy.private_prompt_body}
+      </p>
+      <p className="mt-3 rounded-2xl bg-[#EAF9EF] p-3 text-center text-xs font-bold leading-5 text-[#337257]">
+        {copy.recovery_hint}
       </p>
       <textarea
         value={comment}
@@ -65,7 +80,7 @@ export default function ComplaintForm({ slug, rating }: Props) {
         disabled={status === "sending"}
         className="mt-4 w-full rounded-3xl bg-[#24A66D] py-3 text-lg font-black text-white shadow-lg shadow-[#24A66D]/20 transition-transform active:scale-[0.99] disabled:opacity-60"
       >
-        {status === "sending" ? "Enviando..." : "Enviar en privado"}
+        {status === "sending" ? "Enviando..." : copy.private_submit_label}
       </button>
       {status === "error" && (
         <p className="mt-3 rounded-2xl bg-[#FFF0ED] p-3 text-center text-sm font-bold text-[#C04C3F]">

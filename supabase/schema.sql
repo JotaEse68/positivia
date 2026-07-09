@@ -34,6 +34,23 @@ create index idx_businesses_slug on businesses (slug);
 create index idx_businesses_parent on businesses (parent_business_id)
   where parent_business_id is not null;
 
+-- ---------- business_rating_settings ----------
+-- Textos configurables de la experiencia QR. Son públicos porque se renderizan
+-- en la pantalla que escanea el cliente final; solo service role escribe.
+create table business_rating_settings (
+  business_id uuid primary key references businesses(id) on delete cascade,
+  positive_redirect_title text,
+  positive_redirect_body text,
+  private_prompt_title text,
+  private_prompt_body text,
+  private_submit_label text,
+  private_thanks_title text,
+  private_thanks_body text,
+  recovery_hint text,
+  appreciation_note text,
+  updated_at timestamptz not null default now()
+);
+
 -- ---------- feedback ----------
 create table feedback (
   id uuid primary key default gen_random_uuid(),
@@ -119,6 +136,7 @@ create index idx_notification_events_feedback
 -- ============================================================
 
 alter table businesses enable row level security;
+alter table business_rating_settings enable row level security;
 alter table feedback enable row level security;
 alter table admin_users enable row level security;
 alter table weekly_summaries enable row level security;
@@ -150,6 +168,11 @@ create policy "owners can read their businesses"
   on businesses for select
   to authenticated
   using (id in (select accessible_business_ids()));
+
+create policy "public can read rating settings"
+  on business_rating_settings for select
+  to anon, authenticated
+  using (true);
 
 -- feedback: solo dueños leen; actualizan solo campos de gestión
 -- (reply_sent, suggested_reply editado). Inserción vía service role.

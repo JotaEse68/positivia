@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getSuperadmin } from "@/lib/superadmin";
+import { normalizeRatingCopy } from "@/lib/rating-copy";
 import { supabaseAdmin } from "@/lib/supabase";
 import ClientEditForm from "@/components/ClientEditForm";
 import LogoutButton from "@/components/LogoutButton";
@@ -27,6 +28,14 @@ export default async function ClientDetailPage({
     .maybeSingle();
 
   if (!b) notFound();
+
+  const { data: ratingSettings } = await supabaseAdmin()
+    .from("business_rating_settings")
+    .select(
+      "positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note"
+    )
+    .eq("business_id", b.id)
+    .maybeSingle();
 
   const base = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "";
   const landingUrl = `${base}/r/${b.slug}`;
@@ -68,7 +77,7 @@ export default async function ClientDetailPage({
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
-          <ClientEditForm client={b} />
+          <ClientEditForm client={b} ratingSettings={normalizeRatingCopy(ratingSettings)} />
 
           {/* QR imprimible */}
           <section className="rounded-2xl border bg-white p-6 text-center">

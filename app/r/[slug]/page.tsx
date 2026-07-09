@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { getDemoBusiness } from "@/lib/demo";
+import { defaultRatingCopy, normalizeRatingCopy, type RatingCopy } from "@/lib/rating-copy";
 import { supabaseAnon } from "@/lib/supabase";
 import RatingStars from "@/components/RatingStars";
 
@@ -21,6 +22,21 @@ async function getBusiness(slug: string) {
     .eq("slug", slug)
     .maybeSingle();
   return data;
+}
+
+async function getRatingCopy(businessId: string | undefined): Promise<RatingCopy> {
+  if (!businessId) return defaultRatingCopy;
+
+  const supabase = supabaseAnon();
+  const { data } = await supabase
+    .from("business_rating_settings")
+    .select(
+      "positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note"
+    )
+    .eq("business_id", businessId)
+    .maybeSingle();
+
+  return normalizeRatingCopy(data);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -52,6 +68,9 @@ export default async function RatingPage({ params }: Props) {
   }
 
   const brand = business.color_primary ?? "#23A96F";
+  const copy = normalizeRatingCopy(
+    business.id === "demo-business" ? defaultRatingCopy : await getRatingCopy(business.id)
+  );
 
   return (
     <main
@@ -120,7 +139,11 @@ export default async function RatingPage({ params }: Props) {
               </p>
             </div>
 
-            <RatingStars slug={business.slug} />
+            <RatingStars
+              slug={business.slug}
+              googleReviewLink={business.google_review_link ?? null}
+              copy={copy}
+            />
           </div>
 
           <div className="mt-auto px-5 pb-5 pt-6">
@@ -135,7 +158,7 @@ export default async function RatingPage({ params }: Props) {
               </div>
             </div>
             <p className="mt-5 text-center text-xs font-medium text-[#A37A48]">
-              Hecho con PositivIA para escuchar mejor
+              {copy.appreciation_note}
             </p>
           </div>
         </section>

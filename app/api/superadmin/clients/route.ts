@@ -4,6 +4,31 @@ import { supabaseAdmin } from "@/lib/supabase";
 
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+const RATING_SETTING_FIELDS = [
+  "positive_redirect_title",
+  "positive_redirect_body",
+  "private_prompt_title",
+  "private_prompt_body",
+  "private_submit_label",
+  "private_thanks_title",
+  "private_thanks_body",
+  "recovery_hint",
+  "appreciation_note",
+] as const;
+
+function cleanSetting(value: unknown) {
+  return typeof value === "string" && value.trim()
+    ? value.trim().slice(0, 600)
+    : null;
+}
+
+function isMissingSettingsTable(error: { code?: string; message?: string }) {
+  return (
+    error.code === "42P01" ||
+    error.message?.includes("business_rating_settings") ||
+    error.message?.includes("relation") === true
+  );
+}
 
 // Alta de un cliente (negocio). Solo superadmin. Sube el logo a Storage y crea
 // la fila en businesses. Opcionalmente vincula a un parent_business_id (local
@@ -146,7 +171,8 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "nada que actualizar" }, { status: 400 });
     }
 
-    const { error } = await supabaseAdmin()
+    const admin = supabaseAdmin();
+    const { error } = await admin
       .from("businesses")
       .update(update)
       .eq("id", id);
@@ -156,6 +182,33 @@ export async function PATCH(req: NextRequest) {
         : error.message;
       return NextResponse.json({ error: msg }, { status: 400 });
     }
+
+    if (body.rating_settings && typeof body.rating_settings === "object") {
+      const settings: Record<string, unknown> = { business_id: id };
+      for (const field of RATING_SETTING_FIELDS) {
+        settings[field] = cleanSetting(body.rating_settings[field]);
+      }
+
+      const { error: settingsError } = await admin
+        .from("business_rating_settings")
+        .upsert(settings, { onConflict: "business_id" });
+
+      if (settingsError) {
+        if (isMissingSettingsTable(settingsError)) {
+          return NextResponse.json({
+            ok: true,
+            slug: update.slug ?? null,
+            warning: "rating_settings_table_missing",
+          });
+        }
+
+        return NextResponse.json(
+          { error: "Cambios guardados, pero no se pudieron guardar los mensajes QR." },
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json({ ok: true, slug: update.slug ?? null });
   } catch (err) {
     console.error("[superadmin/clients PATCH] error:", err);
