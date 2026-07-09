@@ -35,38 +35,12 @@ export default function ClientEditForm({
     setError(null);
 
     const form = new FormData(e.currentTarget);
-    const payload = {
-      id: client.id,
-      name: String(form.get("name") ?? ""),
-      slug: String(form.get("slug") ?? ""),
-      color_primary: String(form.get("color_primary") ?? ""),
-      google_review_link: String(form.get("google_review_link") ?? ""),
-      whatsapp_owner: String(form.get("whatsapp_owner") ?? ""),
-      email_owner: String(form.get("email_owner") ?? ""),
-      plan: String(form.get("plan") ?? ""),
-      plan_status: String(form.get("plan_status") ?? ""),
-      rating_settings: {
-        visual_theme: String(form.get("visual_theme") ?? ""),
-        logo_display: String(form.get("logo_display") ?? ""),
-        incentive_text: String(form.get("incentive_text") ?? ""),
-        issue_options: String(form.get("issue_options") ?? ""),
-        positive_redirect_title: String(form.get("positive_redirect_title") ?? ""),
-        positive_redirect_body: String(form.get("positive_redirect_body") ?? ""),
-        private_prompt_title: String(form.get("private_prompt_title") ?? ""),
-        private_prompt_body: String(form.get("private_prompt_body") ?? ""),
-        private_submit_label: String(form.get("private_submit_label") ?? ""),
-        private_thanks_title: String(form.get("private_thanks_title") ?? ""),
-        private_thanks_body: String(form.get("private_thanks_body") ?? ""),
-        recovery_hint: String(form.get("recovery_hint") ?? ""),
-        appreciation_note: String(form.get("appreciation_note") ?? ""),
-      },
-    };
+    form.set("id", client.id);
 
     try {
       const res = await fetch("/api/superadmin/clients", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: form,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo guardar");
@@ -75,8 +49,9 @@ export default function ClientEditForm({
           ? "Cambios guardados. Para guardar mensajes QR falta aplicar la migración."
           : "Cambios guardados"
       );
-      if (payload.slug && payload.slug !== client.slug) {
-        router.push(`/superadmin/clients/${payload.slug}`);
+      const nextSlug = String(form.get("slug") ?? "");
+      if (nextSlug && nextSlug !== client.slug) {
+        router.push(`/superadmin/clients/${nextSlug}`);
       } else {
         router.refresh();
       }
@@ -159,6 +134,19 @@ export default function ClientEditForm({
             defaultValue={client.color_primary ?? "#16a34a"}
             className="mt-1 h-10 w-full rounded-lg border border-neutral-300"
           />
+        </label>
+        <label className="text-sm text-neutral-600 sm:col-span-2">
+          Logo o imagen para el banner del QR
+          <input
+            name="logo"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2.5 text-sm text-neutral-700"
+          />
+          <span className="mt-1 block text-xs leading-5 text-neutral-400">
+            Recomendado: logo cuadrado 800x800 px o imagen horizontal 1200x400 px.
+            PNG/WebP con fondo transparente queda mejor en el QR.
+          </span>
         </label>
         <label className="text-sm text-neutral-600">
           Plan
@@ -312,6 +300,15 @@ export default function ClientEditForm({
 
       {message && <p className="mt-4 text-sm font-medium text-green-700">{message}</p>}
       {error && <p className="mt-4 text-sm font-medium text-red-600">{error}</p>}
+      <div className="mt-6 border-t pt-5">
+        <button
+          type="submit"
+          disabled={busy}
+          className="w-full rounded-xl bg-neutral-950 px-4 py-3 text-sm font-black text-white shadow-sm disabled:opacity-60"
+        >
+          {busy ? "Guardando..." : "Guardar todos los cambios"}
+        </button>
+      </div>
     </form>
   );
 }

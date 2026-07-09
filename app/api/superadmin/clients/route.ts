@@ -130,50 +130,91 @@ export async function PATCH(req: NextRequest) {
     if (!su) {
       return NextResponse.json({ error: "no_autorizado" }, { status: 403 });
     }
-    const body = await req.json().catch(() => null);
-    const id = typeof body?.id === "string" ? body.id : null;
+    const contentType = req.headers.get("content-type") ?? "";
+    const form = contentType.includes("multipart/form-data")
+      ? await req.formData()
+      : null;
+    const body = form ? null : await req.json().catch(() => null);
+    const read = (field: string) =>
+      form ? form.get(field) : body?.[field];
+    const idValue = read("id");
+    const id = typeof idValue === "string" ? idValue : null;
     if (!id) {
       return NextResponse.json({ error: "id requerido" }, { status: 400 });
     }
 
     const update: Record<string, unknown> = {};
-    if (typeof body.name === "string" && body.name.trim()) {
-      update.name = body.name.trim();
+    const nameValue = read("name");
+    if (typeof nameValue === "string" && nameValue.trim()) {
+      update.name = nameValue.trim();
     }
-    if (typeof body.slug === "string") {
-      const slug = body.slug.trim().toLowerCase();
+    const slugValue = read("slug");
+    if (typeof slugValue === "string") {
+      const slug = slugValue.trim().toLowerCase();
       if (!SLUG_RE.test(slug)) {
         return NextResponse.json({ error: "Slug inválido" }, { status: 400 });
       }
       update.slug = slug;
     }
-    if (typeof body.color_primary === "string") {
-      const color = body.color_primary.trim();
+    const colorValue = read("color_primary");
+    if (typeof colorValue === "string") {
+      const color = colorValue.trim();
       if (!COLOR_RE.test(color)) {
         return NextResponse.json({ error: "Color inválido" }, { status: 400 });
       }
       update.color_primary = color;
     }
-    if ("google_review_link" in body) {
+    if (form || (body && "google_review_link" in body)) {
+      const field = read("google_review_link");
       const value =
-        typeof body.google_review_link === "string"
-          ? body.google_review_link.trim()
+        typeof field === "string"
+          ? field.trim()
           : "";
       update.google_review_link = value || null;
     }
-    if ("whatsapp_owner" in body) {
+    if (form || (body && "whatsapp_owner" in body)) {
+      const field = read("whatsapp_owner");
       const value =
-        typeof body.whatsapp_owner === "string" ? body.whatsapp_owner.trim() : "";
+        typeof field === "string" ? field.trim() : "";
       update.whatsapp_owner = value || null;
     }
-    if ("email_owner" in body) {
+    if (form || (body && "email_owner" in body)) {
+      const field = read("email_owner");
       const value =
-        typeof body.email_owner === "string" ? body.email_owner.trim() : "";
+        typeof field === "string" ? field.trim() : "";
       update.email_owner = value || null;
     }
-    if (body.plan === "starter" || body.plan === "pro") update.plan = body.plan;
-    if (["trial", "active", "cancelled"].includes(body.plan_status)) {
-      update.plan_status = body.plan_status;
+    const planValue = read("plan");
+    if (planValue === "starter" || planValue === "pro") update.plan = planValue;
+    const planStatusValue = read("plan_status");
+    if (
+      typeof planStatusValue === "string" &&
+      ["trial", "active", "cancelled"].includes(planStatusValue)
+    ) {
+      update.plan_status = planStatusValue;
+    }
+
+    const logo = form?.get("logo");
+    if (logo && logo instanceof File && logo.size > 0) {
+      if (!logo.type.startsWith("image/")) {
+        return NextResponse.json({ error: "El logo debe ser una imagen" }, { status: 400 });
+      }
+      const currentSlug =
+        typeof update.slug === "string" ? update.slug : `cliente-${id.slice(0, 8)}`;
+      const ext = logo.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${currentSlug}-${Date.now()}.${ext}`;
+      const buffer = Buffer.from(await logo.arrayBuffer());
+      const { error: uploadError } = await supabaseAdmin().storage
+        .from("logos")
+        .upload(path, buffer, { contentType: logo.type, upsert: true });
+
+      if (uploadError) {
+        return NextResponse.json(
+          { error: "No se pudo subir la imagen: " + uploadError.message },
+          { status: 400 }
+        );
+      }
+      update.logo_url = supabaseAdmin().storage.from("logos").getPublicUrl(path).data.publicUrl;
     }
     if (Object.keys(update).length === 0) {
       return NextResponse.json({ error: "nada que actualizar" }, { status: 400 });
@@ -191,16 +232,27 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: msg }, { status: 400 });
     }
 
-    if (body.rating_settings && typeof body.rating_settings === "object") {
+    const hasRatingSettings =
+      form ||
+      (body?.rating_settings && typeof body.rating_settings === "object");
+    if (hasRatingSettings) {
       const settings: Record<string, unknown> = { business_id: id };
       for (const field of RATING_SETTING_FIELDS) {
-        settings[field] = cleanSetting(body.rating_settings[field]);
+        settings[field] = form
+          ? cleanSetting(form.get(field))
+          : cleanSetting(body.rating_settings[field]);
       }
       settings.visual_theme =
-        cleanChoice(body.rating_settings.visual_theme, ["sunrise", "hope", "coral"]) ||
+        cleanChoice(
+          form ? form.get("visual_theme") : body.rating_settings.visual_theme,
+          ["sunrise", "hope", "coral"]
+        ) ||
         "sunrise";
       settings.logo_display =
-        cleanChoice(body.rating_settings.logo_display, ["large", "compact"]) || "large";
+        cleanChoice(
+          form ? form.get("logo_display") : body.rating_settings.logo_display,
+          ["large", "compact"]
+        ) || "large";
 
       const { error: settingsError } = await admin
         .from("business_rating_settings")
