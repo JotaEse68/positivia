@@ -58,13 +58,13 @@ export default async function AccountPage() {
             </h2>
             <p className="mt-2 text-sm text-green-900">
               Logo, colores, WhatsApp, email del dueño, enlace de Google y
-              mensajes del QR se editan desde la ficha del negocio.
+              mensajes del QR se editan desde el panel de experiencia.
             </p>
             <Link
-              href="/superadmin"
+              href="/admin/experience"
               className="mt-4 inline-block rounded-lg bg-green-900 px-4 py-2 text-sm font-semibold text-white"
             >
-              Gestionar negocios
+              Configurar mi QR
             </Link>
           </section>
         </aside>

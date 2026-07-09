@@ -28,13 +28,26 @@ async function getRatingCopy(businessId: string | undefined): Promise<RatingCopy
   if (!businessId) return defaultRatingCopy;
 
   const supabase = supabaseAnon();
-  const { data } = await supabase
+  const fields =
+    "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
+  const fallbackFields =
+    "visual_theme, logo_display, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
+
+  const { data, error } = await supabase
     .from("business_rating_settings")
-    .select(
-      "visual_theme, logo_display, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note"
-    )
+    .select(fields)
     .eq("business_id", businessId)
     .maybeSingle();
+
+  if (error?.code === "42703") {
+    const fallback = await supabase
+      .from("business_rating_settings")
+      .select(fallbackFields)
+      .eq("business_id", businessId)
+      .maybeSingle();
+
+    return normalizeRatingCopy(fallback.data);
+  }
 
   return normalizeRatingCopy(data);
 }
@@ -139,6 +152,11 @@ export default async function RatingPage({ params }: Props) {
                 responsable.
               </p>
             </div>
+            {copy.incentive_text && (
+              <div className="mt-4 max-w-xs rounded-2xl border border-white/25 bg-white/15 px-4 py-3 text-sm font-bold leading-5 text-white shadow-sm backdrop-blur">
+                {copy.incentive_text}
+              </div>
+            )}
           </div>
 
           <div className="relative mx-4 mt-6 rounded-[28px] border border-[#FFE1A6] bg-white p-5 shadow-xl shadow-[#D95B48]/10">

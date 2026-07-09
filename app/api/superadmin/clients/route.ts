@@ -7,6 +7,8 @@ const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const RATING_SETTING_FIELDS = [
   "visual_theme",
   "logo_display",
+  "incentive_text",
+  "issue_options",
   "positive_redirect_title",
   "positive_redirect_body",
   "private_prompt_title",

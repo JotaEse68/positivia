@@ -43,6 +43,8 @@ create table business_rating_settings (
     check (visual_theme in ('sunrise', 'hope', 'coral')),
   logo_display text not null default 'large'
     check (logo_display in ('large', 'compact')),
+  incentive_text text,
+  issue_options text,
   positive_redirect_title text,
   positive_redirect_body text,
   private_prompt_title text,

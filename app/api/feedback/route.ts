@@ -2,20 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDemoBusiness } from "@/lib/demo";
 import { supabaseAdmin } from "@/lib/supabase";
 
-const ISSUE_CATEGORIES = new Set([
-  "product",
-  "attention",
-  "wait",
-  "cleanliness",
-  "other",
-]);
-
 function cleanIssueCategories(value: unknown) {
   if (!Array.isArray(value)) return [];
   return value
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
-    .filter((item) => ISSUE_CATEGORIES.has(item))
+    .filter(Boolean)
+    .map((item) => item.slice(0, 80))
     .slice(0, 5);
 }
 

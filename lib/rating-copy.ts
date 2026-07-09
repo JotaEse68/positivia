@@ -1,6 +1,8 @@
 export type RatingCopy = {
   visual_theme: string;
   logo_display: string;
+  incentive_text: string;
+  issue_options: string;
   positive_redirect_title: string;
   positive_redirect_body: string;
   private_prompt_title: string;
@@ -15,6 +17,9 @@ export type RatingCopy = {
 export const defaultRatingCopy: RatingCopy = {
   visual_theme: "sunrise",
   logo_display: "large",
+  incentive_text: "",
+  issue_options:
+    "Producto o servicio\nAtención recibida\nTiempos de espera\nLimpieza / ambiente\nOtra cosa",
   positive_redirect_title: "¡Qué alegría leer eso!",
   positive_redirect_body:
     "Te abrimos Google por si quieres compartirlo. Gracias por apoyar al negocio.",
@@ -43,6 +48,8 @@ export function normalizeRatingCopy(copy?: Partial<RatingCopy> | null): RatingCo
       logoDisplay === "large" || logoDisplay === "compact"
         ? logoDisplay
         : defaultRatingCopy.logo_display,
+    incentive_text: copy?.incentive_text?.trim() || defaultRatingCopy.incentive_text,
+    issue_options: copy?.issue_options?.trim() || defaultRatingCopy.issue_options,
     positive_redirect_title:
       copy?.positive_redirect_title?.trim() ||
       defaultRatingCopy.positive_redirect_title,

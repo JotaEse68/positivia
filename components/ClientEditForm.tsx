@@ -48,6 +48,8 @@ export default function ClientEditForm({
       rating_settings: {
         visual_theme: String(form.get("visual_theme") ?? ""),
         logo_display: String(form.get("logo_display") ?? ""),
+        incentive_text: String(form.get("incentive_text") ?? ""),
+        issue_options: String(form.get("issue_options") ?? ""),
         positive_redirect_title: String(form.get("positive_redirect_title") ?? ""),
         positive_redirect_body: String(form.get("positive_redirect_body") ?? ""),
         private_prompt_title: String(form.get("private_prompt_title") ?? ""),
@@ -209,6 +211,25 @@ export default function ClientEditForm({
               <option value="large">Grande</option>
               <option value="compact">Compacto</option>
             </select>
+          </label>
+          <label className="text-sm text-neutral-600">
+            Detalle visible / premio permitido
+            <textarea
+              name="incentive_text"
+              defaultValue={ratingSettings.incentive_text}
+              placeholder="Ejemplo: Cada mes sorteamos una cena entre quienes nos dejan su opinión. Sin obligación de publicar en Google."
+              rows={3}
+              className={input}
+            />
+          </label>
+          <label className="text-sm text-neutral-600">
+            Opciones de problema
+            <textarea
+              name="issue_options"
+              defaultValue={ratingSettings.issue_options}
+              rows={5}
+              className={input}
+            />
           </label>
           <label className="text-sm text-neutral-600">
             Título si la experiencia fue buena

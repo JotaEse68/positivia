@@ -21,6 +21,12 @@ export default async function AdminLayout({
               <Link href="/admin/dashboard" className="text-lg font-bold text-neutral-900">
                 Positiv<span className="text-green-500">IA</span>
               </Link>
+              <Link href="/admin/dashboard" className="text-sm text-neutral-500 hover:text-neutral-900">
+                Quejas
+              </Link>
+              <Link href="/admin/experience" className="text-sm text-neutral-500 hover:text-neutral-900">
+                Configurar QR
+              </Link>
               <Link href="/admin/account" className="text-sm text-neutral-500 hover:text-neutral-900">
                 Cuenta
               </Link>

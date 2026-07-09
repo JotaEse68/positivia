@@ -10,13 +10,13 @@ type Props = {
   copy: RatingCopy;
 };
 
-const issueOptions = [
-  { value: "product", label: "Producto o servicio" },
-  { value: "attention", label: "Atención recibida" },
-  { value: "wait", label: "Tiempos de espera" },
-  { value: "cleanliness", label: "Limpieza / ambiente" },
-  { value: "other", label: "Otra cosa" },
-];
+function parseIssueOptions(value: string) {
+  return value
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
 
 // Formulario privado para ratings 1-3. El mensaje deja claro al
 // cliente que esto NO es una reseña pública: va directo al dueño.
@@ -25,6 +25,7 @@ export default function ComplaintForm({ slug, rating, googleReviewLink, copy }: 
   const [categories, setCategories] = useState<string[]>([]);
   const [contactInfo, setContactInfo] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const issueOptions = parseIssueOptions(copy.issue_options);
 
   function toggleCategory(value: string) {
     setCategories((current) =>
@@ -97,10 +98,10 @@ export default function ComplaintForm({ slug, rating, googleReviewLink, copy }: 
         </legend>
         <div className="mt-3 grid grid-cols-2 gap-2">
           {issueOptions.map((option) => {
-            const selected = categories.includes(option.value);
+            const selected = categories.includes(option);
             return (
               <label
-                key={option.value}
+                key={option}
                 className={`flex cursor-pointer items-center justify-center rounded-2xl border px-3 py-2 text-center text-xs font-black transition-colors ${
                   selected
                     ? "border-[#24A66D] bg-[#EAF9EF] text-[#1F7A4E]"
@@ -110,10 +111,10 @@ export default function ComplaintForm({ slug, rating, googleReviewLink, copy }: 
                 <input
                   type="checkbox"
                   checked={selected}
-                  onChange={() => toggleCategory(option.value)}
+                  onChange={() => toggleCategory(option)}
                   className="sr-only"
                 />
-                {option.label}
+                {option}
               </label>
             );
           })}

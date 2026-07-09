@@ -120,13 +120,21 @@ export default async function DashboardPage({
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold text-neutral-900">{selected.name}</h1>
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            isPro ? "bg-green-100 text-green-700" : "bg-neutral-200 text-neutral-600"
-          }`}
-        >
-          Plan {isPro ? "Pro" : "Starter"}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/admin/experience?b=${selected.id}`}
+            className="rounded-lg bg-neutral-950 px-3 py-1.5 text-sm font-semibold text-white"
+          >
+            Configurar QR
+          </Link>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              isPro ? "bg-green-100 text-green-700" : "bg-neutral-200 text-neutral-600"
+            }`}
+          >
+            Plan {isPro ? "Pro" : "Starter"}
+          </span>
+        </div>
       </div>
 
       {/* Selector de local (si el dueño gestiona varios) */}
