@@ -142,7 +142,7 @@ function ComplaintCard({ initial, isPro }: { initial: Complaint; isPro: boolean 
                 value={reply}
                 onChange={(e) => setReply(e.target.value)}
                 rows={4}
-                className="mt-1 w-full rounded-xl border border-neutral-300 p-3 text-sm focus:border-green-500 focus:outline-none"
+                className="mt-1 w-full rounded-xl border border-neutral-300 bg-white p-3 text-sm font-medium leading-6 text-neutral-900 shadow-sm placeholder:text-neutral-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
               />
             </>
           ) : (
