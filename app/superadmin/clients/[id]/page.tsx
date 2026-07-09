@@ -111,10 +111,22 @@ export default async function ClientDetailPage({
               <p className="mt-3 break-all text-xs text-neutral-400">{landingUrl}</p>
               <div className="mt-4 grid gap-2">
                 <a
-                  href={`/api/qr-card?slug=${b.slug}&download=1`}
+                  href={`/api/qr-print?slug=${b.slug}&size=a4&layout=full`}
                   className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-bold text-white"
                 >
-                  Descargar cartel SVG
+                  Descargar cartel PDF A4
+                </a>
+                <a
+                  href={`/api/qr-print?slug=${b.slug}&size=a3&layout=full`}
+                  className="rounded-lg border px-4 py-2 text-sm font-bold text-neutral-700"
+                >
+                  Descargar cartel PDF A3
+                </a>
+                <a
+                  href={`/api/qr-print?slug=${b.slug}&size=a4&layout=qr`}
+                  className="rounded-lg border px-4 py-2 text-sm font-bold text-neutral-700"
+                >
+                  Descargar solo QR PDF
                 </a>
                 <a
                   href={`/api/qr?slug=${b.slug}&download=1`}

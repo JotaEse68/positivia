@@ -59,9 +59,7 @@ export default function BusinessExperienceForm({
       if (!res.ok) throw new Error(data.error || "No se pudo guardar");
       setMessage(
         data.warning === "settings_schema_missing"
-          ? "Datos básicos guardados. Falta aplicar la migración de experiencia QR para guardar textos, premios y preguntas."
-          : data.warning === "banner_column_missing"
-            ? "Cambios guardados. Para guardar el banner falta aplicar la migración 005."
+          ? "Datos básicos guardados. Los textos avanzados no se han podido guardar todavía."
           : "Experiencia QR guardada"
       );
       router.refresh();

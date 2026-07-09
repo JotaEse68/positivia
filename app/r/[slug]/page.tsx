@@ -38,6 +38,16 @@ async function getBusiness(slug: string) {
   return data;
 }
 
+async function getStoredBannerUrl(slug: string) {
+  const supabase = supabaseAnon();
+  const { data, error } = await supabase.storage
+    .from("logos")
+    .list("", { search: `banner-${slug}`, limit: 1 });
+
+  if (error || !data?.some((item) => item.name === `banner-${slug}`)) return null;
+  return supabase.storage.from("logos").getPublicUrl(`banner-${slug}`).data.publicUrl;
+}
+
 async function getRatingCopy(businessId: string | undefined): Promise<RatingCopy> {
   if (!businessId) return defaultRatingCopy;
 
@@ -95,10 +105,11 @@ export default async function RatingPage({ params }: Props) {
   }
 
   const brand = business.color_primary ?? "#23A96F";
-  const bannerUrl =
+  const savedBannerUrl =
     "banner_url" in business && typeof business.banner_url === "string"
       ? business.banner_url
       : null;
+  const bannerUrl = savedBannerUrl ?? (await getStoredBannerUrl(business.slug));
   const copy = normalizeRatingCopy(
     business.id === "demo-business" ? defaultRatingCopy : await getRatingCopy(business.id)
   );

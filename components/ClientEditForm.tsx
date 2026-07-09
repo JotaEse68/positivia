@@ -48,9 +48,7 @@ export default function ClientEditForm({
       if (!res.ok) throw new Error(data.error || "No se pudo guardar");
       setMessage(
         data.warning === "rating_settings_table_missing"
-          ? "Cambios guardados. Para guardar mensajes QR falta aplicar la migración."
-          : data.warning === "banner_column_missing"
-            ? "Cambios guardados. Para guardar el banner falta aplicar la migración 005."
+          ? "Cambios básicos guardados. Los mensajes QR avanzados no se han podido guardar todavía."
           : "Cambios guardados"
       );
       const nextSlug = String(form.get("slug") ?? "");

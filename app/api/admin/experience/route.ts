@@ -58,7 +58,7 @@ async function uploadBusinessImage({
 
   const admin = supabaseAdmin();
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-  const path = `${prefix}-${slug}-${Date.now()}.${ext}`;
+  const path = prefix === "banner" ? `${prefix}-${slug}` : `${prefix}-${slug}-${Date.now()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const { error } = await admin.storage
     .from("logos")
@@ -203,7 +203,7 @@ export async function PATCH(req: NextRequest) {
           .update(update)
           .eq("id", businessId);
         if (!fallback.error) {
-          warning = "banner_column_missing";
+          warning = null;
         } else {
           return NextResponse.json({ error: fallback.error.message }, { status: 400 });
         }
