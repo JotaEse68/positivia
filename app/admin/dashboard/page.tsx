@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { isSuperadminUser } from "@/lib/superadmin";
 import AdminStatsCard from "@/components/AdminStatsCard";
 import ComplaintList from "@/components/ComplaintList";
 
@@ -47,10 +48,13 @@ export default async function DashboardPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) await linkBusinessesForCurrentUser(user);
+  const isSuperadmin = isSuperadminUser(user);
+  const db = isSuperadmin ? supabaseAdmin() : supabase;
+
+  if (user && !isSuperadmin) await linkBusinessesForCurrentUser(user);
 
   // Negocios accesibles (RLS: los del dueño + sus locales hijos).
-  const { data: businesses } = await supabase
+  const { data: businesses } = await db
     .from("businesses")
     .select("id, name, slug, plan, parent_business_id")
     .order("created_at", { ascending: true });
@@ -78,7 +82,7 @@ export default async function DashboardPage({
   const isPro = selected.plan === "pro";
 
   // Feedback del negocio seleccionado (RLS-scoped).
-  const { data: initialFeedback, error: feedbackError } = await supabase
+  const { data: initialFeedback, error: feedbackError } = await db
     .from("feedback")
     .select(
       "id, rating, comment, status, ai_urgency, ai_summary_theme, suggested_reply, issue_categories, contact_info, reply_sent, created_at"
@@ -88,7 +92,7 @@ export default async function DashboardPage({
   let feedback = initialFeedback;
 
   if (feedbackError?.code === "42703") {
-    const fallback = await supabase
+    const fallback = await db
       .from("feedback")
       .select(
         "id, rating, comment, status, ai_urgency, ai_summary_theme, suggested_reply, reply_sent, created_at"
@@ -109,7 +113,7 @@ export default async function DashboardPage({
   const pending = complaints.filter((f) => !f.reply_sent).length;
 
   // Resúmenes semanales.
-  const { data: summaries } = await supabase
+  const { data: summaries } = await db
     .from("weekly_summaries")
     .select("id, week_start, week_end, summary_text, top_theme, positive_count, negative_count")
     .eq("business_id", selected.id)
@@ -119,7 +123,14 @@ export default async function DashboardPage({
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-neutral-900">{selected.name}</h1>
+        <div>
+          {isSuperadmin && (
+            <Link href="/superadmin" className="text-xs font-bold uppercase tracking-[0.14em] text-green-700">
+              Superadmin
+            </Link>
+          )}
+          <h1 className="text-2xl font-bold text-neutral-900">{selected.name}</h1>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/admin/experience?b=${selected.id}`}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { isSuperadminUser } from "@/lib/superadmin";
 
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const RATING_SETTING_FIELDS = [
@@ -97,8 +98,9 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Negocio requerido" }, { status: 400 });
     }
 
-    const accessibleIds = await getAccessibleBusinessIds(user);
-    if (!accessibleIds.has(businessId)) {
+    const canEditAll = isSuperadminUser(user);
+    const accessibleIds = canEditAll ? new Set<string>() : await getAccessibleBusinessIds(user);
+    if (!canEditAll && !accessibleIds.has(businessId)) {
       return NextResponse.json({ error: "no_autorizado" }, { status: 403 });
     }
 

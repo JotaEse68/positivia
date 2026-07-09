@@ -4,6 +4,7 @@ import BusinessExperienceForm from "@/components/BusinessExperienceForm";
 import { defaultRatingCopy, normalizeRatingCopy } from "@/lib/rating-copy";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
+import { isSuperadminUser } from "@/lib/superadmin";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,9 @@ async function linkBusinessesForCurrentUser(user: { id: string; email?: string |
   );
 }
 
-async function getRatingSettings(supabase: Awaited<ReturnType<typeof createServerSupabase>>, businessId: string) {
+type SupabaseClientLike = Awaited<ReturnType<typeof createServerSupabase>> | ReturnType<typeof supabaseAdmin>;
+
+async function getRatingSettings(supabase: SupabaseClientLike, businessId: string) {
   const fields =
     "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
   const fallbackFields =
@@ -77,9 +80,12 @@ export default async function ExperiencePage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) await linkBusinessesForCurrentUser(user);
+  const isSuperadmin = isSuperadminUser(user);
+  const db = isSuperadmin ? supabaseAdmin() : supabase;
 
-  const { data: businesses } = await supabase
+  if (user && !isSuperadmin) await linkBusinessesForCurrentUser(user);
+
+  const { data: businesses } = await db
     .from("businesses")
     .select(
       "id, name, slug, plan, parent_business_id, logo_url, color_primary, google_review_link, whatsapp_owner, email_owner"
@@ -101,7 +107,7 @@ export default async function ExperiencePage({
   }
 
   const selected = list.find((business) => business.id === query.b) ?? list[0];
-  const ratingSettings = await getRatingSettings(supabase, selected.id);
+  const ratingSettings = await getRatingSettings(db, selected.id);
   const headersList = await headers();
   const host = headersList.get("host") ?? "positivia.vercel.app";
   const proto = headersList.get("x-forwarded-proto") ?? "https";
@@ -112,7 +118,7 @@ export default async function ExperiencePage({
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1F7A4E]">
-            Panel del cliente
+            {isSuperadmin ? "Superadmin / panel del cliente" : "Panel del cliente"}
           </p>
           <h1 className="mt-1 text-3xl font-black text-neutral-950">
             Experiencia QR y reseñas
@@ -123,11 +129,19 @@ export default async function ExperiencePage({
           </p>
         </div>
         <Link
-          href={`/admin/dashboard?b=${selected.id}`}
+          href={isSuperadmin ? "/superadmin" : `/admin/dashboard?b=${selected.id}`}
           className="rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-bold text-neutral-800"
         >
-          Ver quejas
+          {isSuperadmin ? "Volver al centro" : "Ver quejas"}
         </Link>
+        {isSuperadmin && (
+          <Link
+            href={`/admin/dashboard?b=${selected.id}`}
+            className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-bold text-white"
+          >
+            Ver quejas
+          </Link>
+        )}
       </div>
 
       {list.length > 1 && (

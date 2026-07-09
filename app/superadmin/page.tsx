@@ -65,6 +65,11 @@ const accessGroups: { title: string; links: AccessLink[] }[] = [
         hint: "Vista real con RLS",
       },
       {
+        label: "Configurar QR",
+        href: "/admin/experience",
+        hint: "Experiencia del cliente",
+      },
+      {
         label: "Login",
         href: "/admin/login",
         hint: "Acceso dueño/superadmin",
@@ -137,10 +142,13 @@ export default async function SuperadminPage() {
     .filter((b) => !b.parent_business_id)
     .map((b) => ({ id: b.id, name: b.name }));
   const nameById = new Map(list.map((b) => [b.id, b.name]));
+  const activeCount = list.filter((b) => b.plan_status === "active").length;
+  const trialCount = list.filter((b) => b.plan_status === "trial").length;
+  const cancelledCount = list.filter((b) => b.plan_status === "cancelled").length;
 
   return (
-    <div className="min-h-screen bg-neutral-100">
-      <header className="border-b bg-neutral-950">
+    <div className="min-h-screen bg-[#F6F7F3]">
+      <header className="border-b border-[#203126]/10 bg-[#203126]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <span className="text-lg font-bold text-white">
             Positiv<span className="text-green-400">IA</span>{" "}
@@ -151,34 +159,76 @@ export default async function SuperadminPage() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <section className="mb-8 rounded-2xl border bg-white p-5">
+        <section className="mb-6 overflow-hidden rounded-2xl border border-[#203126]/10 bg-white shadow-sm">
+          <div className="bg-gradient-to-br from-[#FFBE4D] via-[#FF7D66] to-[#24A66D] p-6 text-white">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/75">
+              Cabina general
+            </p>
+            <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-black leading-tight">
+                  Crea, abre y controla cualquier cliente desde aquí
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-white/90">
+                  Esta es tu mesa de mando: demo, altas, QR, panel del dueño,
+                  quejas y ficha técnica en una sola pantalla.
+                </p>
+              </div>
+              <a
+                href="https://positivia.vercel.app/"
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg bg-white px-4 py-2 text-sm font-black text-[#203126] shadow-sm"
+              >
+                Abrir producción
+              </a>
+            </div>
+          </div>
+          <div className="grid gap-px bg-[#203126]/10 sm:grid-cols-4">
+            <div className="bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-neutral-400">
+                Total clientes
+              </p>
+              <p className="mt-1 text-3xl font-black text-neutral-950">{list.length}</p>
+            </div>
+            <div className="bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-neutral-400">
+                Activos
+              </p>
+              <p className="mt-1 text-3xl font-black text-green-700">{activeCount}</p>
+            </div>
+            <div className="bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-neutral-400">
+                Prueba
+              </p>
+              <p className="mt-1 text-3xl font-black text-amber-600">{trialCount}</p>
+            </div>
+            <div className="bg-white p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-neutral-400">
+                Cancelados
+              </p>
+              <p className="mt-1 text-3xl font-black text-neutral-500">{cancelledCount}</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mb-8 rounded-2xl border border-[#203126]/10 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-green-700">
-                Centro de control
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
+                Entradas rápidas
               </p>
-              <h1 className="mt-1 text-2xl font-bold text-neutral-900">
-                Accesos rápidos
-              </h1>
+              <h2 className="mt-1 text-xl font-black text-neutral-950">Demo, operación y sistema</h2>
               <p className="mt-1 max-w-2xl text-sm text-neutral-500">
-                Todo lo necesario para enseñar la demo, operar clientes y revisar
-                endpoints internos desde una sola pantalla.
+                Para enseñar PositivIA y comprobar cada pieza sin buscar URLs.
               </p>
             </div>
-            <a
-              href="https://positivia.vercel.app/"
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white"
-            >
-              Abrir producción
-            </a>
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {accessGroups.map((group) => (
               <div key={group.title} className="rounded-xl border border-neutral-200 p-4">
-                <h2 className="text-sm font-semibold text-neutral-900">{group.title}</h2>
+                <h3 className="text-sm font-black text-neutral-900">{group.title}</h3>
                 <div className="mt-3 space-y-2">
                   {group.links.map((link) => {
                     const className =
@@ -214,24 +264,37 @@ export default async function SuperadminPage() {
           </div>
         </section>
 
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Clientes</h1>
-            <p className="text-sm text-neutral-500">{list.length} negocios dados de alta</p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
+              Clientes
+            </p>
+            <h2 className="mt-1 text-2xl font-black text-neutral-950">
+              Paneles de cada comercio
+            </h2>
+            <p className="text-sm text-neutral-500">
+              Desde cada fila puedes entrar a lo que vería el dueño o tocar la ficha interna.
+            </p>
           </div>
+          <Link
+            href="#nuevo-cliente"
+            className="rounded-lg bg-[#203126] px-4 py-2 text-sm font-black text-white"
+          >
+            Crear cliente
+          </Link>
         </div>
 
         <div id="nuevo-cliente" className="mb-8 scroll-mt-6">
           <NewClientForm parents={parents} />
         </div>
 
-        <div className="overflow-hidden rounded-2xl border bg-white">
+        <div className="overflow-hidden rounded-2xl border border-[#203126]/10 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead className="bg-neutral-50 text-left text-neutral-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Negocio</th>
                 <th className="px-4 py-3 font-medium">Plan / Estado</th>
-                <th className="px-4 py-3 font-medium">Gestionar</th>
+                <th className="px-4 py-3 font-medium">Entradas</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -275,12 +338,39 @@ export default async function SuperadminPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/superadmin/clients/${b.slug}`}
-                        className="text-green-600 hover:underline"
-                      >
-                        Editar / QR
-                      </Link>
+                      <div className="flex flex-wrap gap-2">
+                        <Link
+                          href={`/superadmin/clients/${b.slug}`}
+                          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-bold text-neutral-800 hover:border-green-300 hover:bg-green-50"
+                        >
+                          Ficha
+                        </Link>
+                        <Link
+                          href={`/admin/experience?b=${b.id}`}
+                          className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-bold text-green-800 hover:bg-green-100"
+                        >
+                          Configurar QR
+                        </Link>
+                        <Link
+                          href={`/admin/dashboard?b=${b.id}`}
+                          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-bold text-neutral-800 hover:border-green-300 hover:bg-green-50"
+                        >
+                          Quejas
+                        </Link>
+                        <Link
+                          href={`/r/${b.slug}`}
+                          target="_blank"
+                          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-bold text-neutral-800 hover:border-amber-300 hover:bg-amber-50"
+                        >
+                          QR público
+                        </Link>
+                        <Link
+                          href={`/api/qr?slug=${b.slug}&download=1`}
+                          className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-bold text-neutral-800 hover:border-amber-300 hover:bg-amber-50"
+                        >
+                          Descargar QR
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))
