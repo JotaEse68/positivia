@@ -39,6 +39,35 @@ function isMissingSettingsSchema(error: { code?: string; message?: string }) {
   );
 }
 
+function isMissingColumn(error: { code?: string; message?: string }, column: string) {
+  return error.code === "42703" || error.message?.includes(column) === true;
+}
+
+async function uploadBusinessImage({
+  file,
+  slug,
+  prefix,
+}: {
+  file: File;
+  slug: string;
+  prefix: string;
+}) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("El archivo debe ser una imagen");
+  }
+
+  const admin = supabaseAdmin();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+  const path = `${prefix}-${slug}-${Date.now()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage
+    .from("logos")
+    .upload(path, buffer, { contentType: file.type, upsert: true });
+
+  if (error) throw new Error(error.message);
+  return admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
+}
+
 async function getAccessibleBusinessIds(user: { id: string; email?: string | null }) {
   const admin = supabaseAdmin();
   const email = user.email?.trim();
@@ -130,32 +159,57 @@ export async function PATCH(req: NextRequest) {
 
     const logo = form.get("logo");
     if (logo && logo instanceof File && logo.size > 0) {
-      if (!logo.type.startsWith("image/")) {
-        return NextResponse.json({ error: "El logo debe ser una imagen" }, { status: 400 });
-      }
-      const ext = logo.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${business.slug}-${Date.now()}.${ext}`;
-      const buffer = Buffer.from(await logo.arrayBuffer());
-      const { error: uploadError } = await admin.storage
-        .from("logos")
-        .upload(path, buffer, { contentType: logo.type, upsert: true });
-
-      if (uploadError) {
+      try {
+        update.logo_url = await uploadBusinessImage({
+          file: logo,
+          slug: business.slug,
+          prefix: "logo",
+        });
+      } catch (err) {
         return NextResponse.json(
-          { error: "No se pudo subir el logo: " + uploadError.message },
+          { error: "No se pudo subir el logo: " + (err instanceof Error ? err.message : "") },
           { status: 400 }
         );
       }
-      update.logo_url = admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
     }
 
+    const banner = form.get("banner");
+    if (banner && banner instanceof File && banner.size > 0) {
+      try {
+        update.banner_url = await uploadBusinessImage({
+          file: banner,
+          slug: business.slug,
+          prefix: "banner",
+        });
+      } catch (err) {
+        return NextResponse.json(
+          { error: "No se pudo subir el banner: " + (err instanceof Error ? err.message : "") },
+          { status: 400 }
+        );
+      }
+    }
+
+    let warning: string | null = null;
     const { error: businessError } = await admin
       .from("businesses")
       .update(update)
       .eq("id", businessId);
 
     if (businessError) {
-      return NextResponse.json({ error: businessError.message }, { status: 400 });
+      if (isMissingColumn(businessError, "banner_url")) {
+        delete update.banner_url;
+        const fallback = await admin
+          .from("businesses")
+          .update(update)
+          .eq("id", businessId);
+        if (!fallback.error) {
+          warning = "banner_column_missing";
+        } else {
+          return NextResponse.json({ error: fallback.error.message }, { status: 400 });
+        }
+      } else {
+        return NextResponse.json({ error: businessError.message }, { status: 400 });
+      }
     }
 
     const settings: Record<string, unknown> = { business_id: businessId };
@@ -184,7 +238,7 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, ...(warning ? { warning } : {}) });
   } catch (err) {
     console.error("[admin/experience PATCH] error:", err);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

@@ -38,6 +38,35 @@ function isMissingSettingsTable(error: { code?: string; message?: string }) {
   );
 }
 
+function isMissingColumn(error: { code?: string; message?: string }, column: string) {
+  return error.code === "42703" || error.message?.includes(column) === true;
+}
+
+async function uploadBusinessImage({
+  file,
+  slug,
+  prefix,
+}: {
+  file: File;
+  slug: string;
+  prefix: string;
+}) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("El archivo debe ser una imagen");
+  }
+
+  const admin = supabaseAdmin();
+  const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+  const path = `${prefix}-${slug}-${Date.now()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage
+    .from("logos")
+    .upload(path, buffer, { contentType: file.type, upsert: true });
+
+  if (error) throw new Error(error.message);
+  return admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
+}
+
 // Alta de un cliente (negocio). Solo superadmin. Sube el logo a Storage y crea
 // la fila en businesses. Opcionalmente vincula a un parent_business_id (local
 // adicional de una cadena bajo un Pro base).
@@ -196,40 +225,67 @@ export async function PATCH(req: NextRequest) {
 
     const logo = form?.get("logo");
     if (logo && logo instanceof File && logo.size > 0) {
-      if (!logo.type.startsWith("image/")) {
-        return NextResponse.json({ error: "El logo debe ser una imagen" }, { status: 400 });
-      }
       const currentSlug =
         typeof update.slug === "string" ? update.slug : `cliente-${id.slice(0, 8)}`;
-      const ext = logo.name.split(".").pop()?.toLowerCase() || "png";
-      const path = `${currentSlug}-${Date.now()}.${ext}`;
-      const buffer = Buffer.from(await logo.arrayBuffer());
-      const { error: uploadError } = await supabaseAdmin().storage
-        .from("logos")
-        .upload(path, buffer, { contentType: logo.type, upsert: true });
-
-      if (uploadError) {
+      try {
+        update.logo_url = await uploadBusinessImage({
+          file: logo,
+          slug: currentSlug,
+          prefix: "logo",
+        });
+      } catch (err) {
         return NextResponse.json(
-          { error: "No se pudo subir la imagen: " + uploadError.message },
+          { error: "No se pudo subir el logo: " + (err instanceof Error ? err.message : "") },
           { status: 400 }
         );
       }
-      update.logo_url = supabaseAdmin().storage.from("logos").getPublicUrl(path).data.publicUrl;
+    }
+
+    const banner = form?.get("banner");
+    if (banner && banner instanceof File && banner.size > 0) {
+      const currentSlug =
+        typeof update.slug === "string" ? update.slug : `cliente-${id.slice(0, 8)}`;
+      try {
+        update.banner_url = await uploadBusinessImage({
+          file: banner,
+          slug: currentSlug,
+          prefix: "banner",
+        });
+      } catch (err) {
+        return NextResponse.json(
+          { error: "No se pudo subir el banner: " + (err instanceof Error ? err.message : "") },
+          { status: 400 }
+        );
+      }
     }
     if (Object.keys(update).length === 0) {
       return NextResponse.json({ error: "nada que actualizar" }, { status: 400 });
     }
 
     const admin = supabaseAdmin();
+    let warning: string | null = null;
     const { error } = await admin
       .from("businesses")
       .update(update)
       .eq("id", id);
     if (error) {
-      const msg = error.message.includes("duplicate")
-        ? "Ese slug ya está en uso"
-        : error.message;
-      return NextResponse.json({ error: msg }, { status: 400 });
+      if (isMissingColumn(error, "banner_url")) {
+        delete update.banner_url;
+        const fallback = await admin
+          .from("businesses")
+          .update(update)
+          .eq("id", id);
+        if (!fallback.error) {
+          warning = "banner_column_missing";
+        } else {
+          return NextResponse.json({ error: fallback.error.message }, { status: 400 });
+        }
+      } else {
+        const msg = error.message.includes("duplicate")
+          ? "Ese slug ya está en uso"
+          : error.message;
+        return NextResponse.json({ error: msg }, { status: 400 });
+      }
     }
 
     const hasRatingSettings =
@@ -263,7 +319,7 @@ export async function PATCH(req: NextRequest) {
           return NextResponse.json({
             ok: true,
             slug: update.slug ?? null,
-            warning: "rating_settings_table_missing",
+            warning: warning ?? "rating_settings_table_missing",
           });
         }
 
@@ -274,7 +330,11 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true, slug: update.slug ?? null });
+    return NextResponse.json({
+      ok: true,
+      slug: update.slug ?? null,
+      ...(warning ? { warning } : {}),
+    });
   } catch (err) {
     console.error("[superadmin/clients PATCH] error:", err);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

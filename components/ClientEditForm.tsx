@@ -10,6 +10,8 @@ type Client = {
   slug: string;
   plan: "starter" | "pro";
   plan_status: "trial" | "active" | "cancelled";
+  logo_url?: string | null;
+  banner_url?: string | null;
   color_primary: string | null;
   google_review_link: string | null;
   whatsapp_owner: string | null;
@@ -47,6 +49,8 @@ export default function ClientEditForm({
       setMessage(
         data.warning === "rating_settings_table_missing"
           ? "Cambios guardados. Para guardar mensajes QR falta aplicar la migración."
+          : data.warning === "banner_column_missing"
+            ? "Cambios guardados. Para guardar el banner falta aplicar la migración 005."
           : "Cambios guardados"
       );
       const nextSlug = String(form.get("slug") ?? "");
@@ -136,7 +140,7 @@ export default function ClientEditForm({
           />
         </label>
         <label className="text-sm text-neutral-600 sm:col-span-2">
-          Logo o imagen para el banner del QR
+          Logo redondo
           <input
             name="logo"
             type="file"
@@ -144,8 +148,20 @@ export default function ClientEditForm({
             className="mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2.5 text-sm text-neutral-700"
           />
           <span className="mt-1 block text-xs leading-5 text-neutral-400">
-            Recomendado: logo cuadrado 800x800 px o imagen horizontal 1200x400 px.
-            PNG/WebP con fondo transparente queda mejor en el QR.
+            Canva: 800x800 px. Mejor PNG/WebP, centrado, con aire alrededor.
+          </span>
+        </label>
+        <label className="text-sm text-neutral-600 sm:col-span-2">
+          Banner horizontal de la empresa
+          <input
+            name="banner"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            className="mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2.5 text-sm text-neutral-700"
+          />
+          <span className="mt-1 block text-xs leading-5 text-neutral-400">
+            Canva: 1600x700 px. Deja lo importante en el centro para que se vea
+            bien en móvil. Si no subes banner, se usa el color/degradado.
           </span>
         </label>
         <label className="text-sm text-neutral-600">

@@ -20,6 +20,7 @@ create table businesses (
   slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   name text not null,
   logo_url text,
+  banner_url text,
   color_primary text default '#16a34a' check (color_primary ~ '^#[0-9a-fA-F]{6}$'),
   google_review_link text,
   whatsapp_owner text,

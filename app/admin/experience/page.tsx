@@ -15,6 +15,7 @@ type Business = {
   plan: "starter" | "pro";
   parent_business_id: string | null;
   logo_url: string | null;
+  banner_url?: string | null;
   color_primary: string | null;
   google_review_link: string | null;
   whatsapp_owner: string | null;
@@ -85,14 +86,24 @@ export default async function ExperiencePage({
 
   if (user && !isSuperadmin) await linkBusinessesForCurrentUser(user);
 
-  const { data: businesses } = await db
+  const businessFields =
+    "id, name, slug, plan, parent_business_id, logo_url, banner_url, color_primary, google_review_link, whatsapp_owner, email_owner";
+  const fallbackBusinessFields =
+    "id, name, slug, plan, parent_business_id, logo_url, color_primary, google_review_link, whatsapp_owner, email_owner";
+  const { data: businesses, error: businessesError } = await db
     .from("businesses")
-    .select(
-      "id, name, slug, plan, parent_business_id, logo_url, color_primary, google_review_link, whatsapp_owner, email_owner"
-    )
+    .select(businessFields)
     .order("created_at", { ascending: true });
 
-  const list = (businesses ?? []) as Business[];
+  const fallbackBusinesses =
+    businessesError?.code === "42703"
+      ? await db
+          .from("businesses")
+          .select(fallbackBusinessFields)
+          .order("created_at", { ascending: true })
+      : null;
+
+  const list = ((businesses ?? fallbackBusinesses?.data) ?? []) as Business[];
 
   if (list.length === 0) {
     return (

@@ -10,6 +10,7 @@ type Business = {
   name: string;
   slug: string;
   logo_url: string | null;
+  banner_url?: string | null;
   color_primary: string | null;
   google_review_link: string | null;
   whatsapp_owner: string | null;
@@ -59,6 +60,8 @@ export default function BusinessExperienceForm({
       setMessage(
         data.warning === "settings_schema_missing"
           ? "Datos básicos guardados. Falta aplicar la migración de experiencia QR para guardar textos, premios y preguntas."
+          : data.warning === "banner_column_missing"
+            ? "Cambios guardados. Para guardar el banner falta aplicar la migración 005."
           : "Experiencia QR guardada"
       );
       router.refresh();
@@ -116,6 +119,16 @@ export default function BusinessExperienceForm({
           <div className="rounded-2xl border border-amber-100 bg-[#FFF8E7] p-4">
             <p className="text-sm font-black text-[#6B421B]">{business.name}</p>
             <p className="mt-1 text-xs font-medium text-[#8A6B3E]">/{business.slug}</p>
+            {business.banner_url && (
+              <Image
+                src={business.banner_url}
+                alt={`Banner de ${business.name}`}
+                width={240}
+                height={80}
+                className="mt-3 h-20 w-full rounded-xl object-cover"
+                unoptimized
+              />
+            )}
             {business.logo_url ? (
               <Image
                 src={business.logo_url}
@@ -197,13 +210,29 @@ export default function BusinessExperienceForm({
             />
           </label>
           <label className={label}>
-            Cambiar logo
+            Logo redondo
             <input
               name="logo"
               type="file"
               accept="image/*"
               className="mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm"
             />
+            <span className="mt-1 block text-xs leading-5 text-neutral-400">
+              Canva: 800x800 px. Mejor PNG/WebP, centrado, con aire alrededor.
+            </span>
+          </label>
+          <label className={`${label} sm:col-span-2`}>
+            Banner horizontal de la empresa
+            <input
+              name="banner"
+              type="file"
+              accept="image/*"
+              className="mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm"
+            />
+            <span className="mt-1 block text-xs leading-5 text-neutral-400">
+              Canva: 1600x700 px. Mantén texto/logos importantes en el centro,
+              porque en móvil los bordes pueden recortarse.
+            </span>
           </label>
           <label className={label}>
             Versión de colores

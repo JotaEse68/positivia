@@ -19,13 +19,26 @@ export default async function ClientDetailPage({
   if (!su) notFound();
   const { id } = await params;
 
-  const { data: b } = await supabaseAdmin()
+  const businessFields =
+    "id, name, slug, plan, plan_status, logo_url, banner_url, color_primary, google_review_link, whatsapp_owner, email_owner, parent_business_id";
+  const fallbackBusinessFields =
+    "id, name, slug, plan, plan_status, logo_url, color_primary, google_review_link, whatsapp_owner, email_owner, parent_business_id";
+  const { data: initialBusiness, error: businessError } = await supabaseAdmin()
     .from("businesses")
-    .select(
-      "id, name, slug, plan, plan_status, logo_url, color_primary, google_review_link, whatsapp_owner, email_owner, parent_business_id"
-    )
+    .select(businessFields)
     .eq("slug", id)
     .maybeSingle();
+
+  const fallbackBusiness =
+    businessError?.code === "42703"
+      ? await supabaseAdmin()
+          .from("businesses")
+          .select(fallbackBusinessFields)
+          .eq("slug", id)
+          .maybeSingle()
+      : null;
+
+  const b = initialBusiness ?? fallbackBusiness?.data;
 
   if (!b) notFound();
 
