@@ -39,9 +39,14 @@ body {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
 }
+@keyframes pv-sparkle {
+  0%, 100% { transform: rotate(-8deg) scale(1); }
+  45% { transform: rotate(7deg) scale(1.08); }
+}
 .pv-rise { animation: pv-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .pv-fade { animation: pv-fade 1s ease both; }
 .pv-float { animation: pv-float 3.5s ease-in-out infinite; }
+.pv-sparkle { animation: pv-sparkle 2.4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .pv-rise, .pv-fade, .pv-float { animation: none; }
+  .pv-rise, .pv-fade, .pv-float, .pv-sparkle { animation: none; }
 }

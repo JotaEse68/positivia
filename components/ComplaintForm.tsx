@@ -28,12 +28,16 @@ export default function ComplaintForm({ slug, rating }: Props) {
 
   if (status === "sent") {
     return (
-      <div className="mt-6 rounded-2xl bg-green-50 p-4 text-center">
-        <p className="text-lg font-semibold text-green-800">
-          Gracias por contárnoslo
+      <div className="mt-6 rounded-3xl bg-[#EAF9EF] p-5 text-center">
+        <div className="pv-sparkle mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+          ✨
+        </div>
+        <p className="text-lg font-black text-[#1F7A4E]">
+          Gracias, de verdad
         </p>
-        <p className="mt-2 text-sm text-green-700">
-          El responsable del negocio lo leerá directamente y tomará medidas.
+        <p className="mt-2 text-sm leading-6 text-[#337257]">
+          Esto no se publica. Llega directo al negocio para que pueda cuidarlo
+          mejor.
         </p>
       </div>
     );
@@ -41,32 +45,31 @@ export default function ComplaintForm({ slug, rating }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="mt-6 text-left">
-      <h2 className="text-center text-xl font-semibold text-neutral-900">
-        Cuéntanos qué pasó
+      <h2 className="text-center text-xl font-black text-[#322A20]">
+        Cuéntanos qué podemos mejorar
       </h2>
-      <p className="mt-2 text-center text-sm text-neutral-500">
-        Este mensaje es <strong>privado</strong>: no se publica en ningún
-        sitio. El dueño del negocio lo leerá directamente.
+      <p className="mt-2 text-center text-sm leading-6 text-[#6D5B49]">
+        Tu mensaje es <strong>privado</strong>. No se publica en Google ni en
+        ningún sitio.
       </p>
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         rows={4}
         autoFocus
-        placeholder="Escribe aquí lo que no ha ido bien…"
-        className="mt-4 w-full rounded-2xl border border-neutral-300 bg-neutral-50 p-4 text-base text-neutral-900 focus:border-[var(--brand)] focus:bg-white focus:outline-none"
+        placeholder="Ejemplo: tardó mucho, faltó algo, no me sentí bien atendido..."
+        className="mt-4 w-full rounded-3xl border border-[#FFD6B8] bg-[#FFF8E7] p-4 text-base text-[#322A20] placeholder:text-[#B59C7A] focus:border-[#FF9B6A] focus:bg-white focus:outline-none"
       />
       <button
         type="submit"
         disabled={status === "sending"}
-        className="mt-4 w-full rounded-2xl py-3 text-lg font-semibold text-white shadow-lg shadow-neutral-900/10 transition-opacity disabled:opacity-60"
-        style={{ backgroundColor: "var(--brand)" }}
+        className="mt-4 w-full rounded-3xl bg-[#24A66D] py-3 text-lg font-black text-white shadow-lg shadow-[#24A66D]/20 transition-transform active:scale-[0.99] disabled:opacity-60"
       >
-        {status === "sending" ? "Enviando…" : "Enviar"}
+        {status === "sending" ? "Enviando..." : "Enviar en privado"}
       </button>
       {status === "error" && (
-        <p className="mt-3 rounded-xl bg-red-50 p-3 text-center text-sm font-medium text-red-600">
-          No se pudo enviar. Inténtalo de nuevo.
+        <p className="mt-3 rounded-2xl bg-[#FFF0ED] p-3 text-center text-sm font-bold text-[#C04C3F]">
+          No hemos podido enviarlo. Prueba otra vez en un momento.
         </p>
       )}
     </form>

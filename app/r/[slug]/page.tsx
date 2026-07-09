@@ -51,22 +51,25 @@ export default async function RatingPage({ params }: Props) {
     );
   }
 
-  const brand = business.color_primary ?? "#16a34a";
+  const brand = business.color_primary ?? "#23A96F";
 
   return (
     <main
-      className="min-h-screen bg-[#F8F5EE] px-4 py-5 text-[#132F2B]"
+      className="min-h-screen bg-[#FFF7DA] px-4 py-5 text-[#243126]"
       style={{ ["--brand" as string]: brand }}
     >
       <div className="mx-auto flex min-h-[calc(100vh-40px)] w-full max-w-md flex-col">
-        <section className="relative flex flex-1 flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl shadow-neutral-900/10">
+        <section className="relative flex flex-1 flex-col overflow-hidden rounded-[30px] bg-white shadow-2xl shadow-[#B86B35]/15">
           <div
-            className="absolute inset-x-0 top-0 h-40"
+            className="absolute inset-x-0 top-0 h-48"
             style={{
               background:
-                "linear-gradient(135deg, var(--brand), #12312F 76%)",
+                "radial-gradient(circle at 22% 24%, #FFE07A 0 18%, transparent 36%), linear-gradient(135deg, #FFB84D 0%, #FF7D66 42%, var(--brand) 100%)",
             }}
           />
+          <div className="pv-sparkle absolute right-7 top-32 z-10 flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-xl shadow-[#D95B48]/20">
+            ✨
+          </div>
           <div className="relative px-5 pt-6 text-white">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -76,44 +79,44 @@ export default async function RatingPage({ params }: Props) {
                     alt={business.name}
                     width={58}
                     height={58}
-                    className="h-14 w-14 rounded-2xl border border-white/20 object-cover"
+                    className="h-14 w-14 rounded-2xl border border-white/35 object-cover shadow-sm"
                     unoptimized
                   />
                 ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-2xl font-bold backdrop-blur">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/35 bg-white/20 text-2xl font-bold backdrop-blur">
                     {business.name.charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/65">
-                    Tu opinión
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">
+                    Opinión rápida
                   </p>
                   <h1 className="text-2xl font-bold leading-tight">{business.name}</h1>
                 </div>
               </div>
-              <span className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/80">
-                30s
+              <span className="rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-medium text-white">
+                20s
               </span>
             </div>
 
-            <div className="mt-7">
-              <p className="text-3xl font-bold leading-tight">
-                ¿Cómo ha ido hoy?
+            <div className="mt-8 pr-14">
+              <p className="text-3xl font-black leading-tight">
+                ¿Qué tal te ha cuidado el equipo?
               </p>
-              <p className="mt-2 max-w-xs text-sm leading-6 text-white/75">
-                Toca una estrella. Si algo no ha ido bien, lo lee directamente
-                el responsable del negocio.
+              <p className="mt-2 max-w-xs text-sm leading-6 text-white/85">
+                Una estrella basta. Si algo falló, se lo cuentas en privado al
+                responsable.
               </p>
             </div>
           </div>
 
-          <div className="relative mx-4 mt-8 rounded-3xl border border-neutral-100 bg-white p-5 shadow-xl shadow-neutral-900/10">
-            <div className="rounded-2xl bg-[#F8F5EE] px-4 py-3 text-center">
-              <p className="text-sm font-medium text-neutral-700">
-                Valora tu experiencia
+          <div className="relative mx-4 mt-10 rounded-[28px] border border-[#FFE1A6] bg-white p-5 shadow-xl shadow-[#D95B48]/10">
+            <div className="rounded-3xl bg-[#FFF4CF] px-4 py-3 text-center">
+              <p className="text-sm font-bold text-[#623B16]">
+                Toca una estrella
               </p>
-              <p className="mt-1 text-xs text-neutral-500">
-                Sin registro, sin descargar apps.
+              <p className="mt-1 text-xs text-[#8A6B3E]">
+                Sin cuenta, sin descargar nada.
               </p>
             </div>
 
@@ -121,18 +124,18 @@ export default async function RatingPage({ params }: Props) {
           </div>
 
           <div className="mt-auto px-5 pb-5 pt-6">
-            <div className="grid grid-cols-2 gap-2 text-xs text-neutral-500">
-              <div className="rounded-2xl bg-neutral-50 p-3">
-                <p className="font-semibold text-neutral-800">4-5 estrellas</p>
-                <p className="mt-1">Te ayuda a dejar una reseña pública.</p>
+            <div className="grid grid-cols-2 gap-2 text-xs text-[#75543B]">
+              <div className="rounded-2xl bg-[#FFF8E7] p-3">
+                <p className="font-bold text-[#4E351F]">4-5 estrellas</p>
+                <p className="mt-1">Te lleva a apoyar al negocio en Google.</p>
               </div>
-              <div className="rounded-2xl bg-neutral-50 p-3">
-                <p className="font-semibold text-neutral-800">1-3 estrellas</p>
-                <p className="mt-1">Abre un mensaje privado al negocio.</p>
+              <div className="rounded-2xl bg-[#FFF0ED] p-3">
+                <p className="font-bold text-[#4E351F]">1-3 estrellas</p>
+                <p className="mt-1">Abre un mensaje privado para mejorar.</p>
               </div>
             </div>
-            <p className="mt-5 text-center text-xs text-neutral-400">
-              Protegido por PositivIA
+            <p className="mt-5 text-center text-xs font-medium text-[#A37A48]">
+              Hecho con PositivIA para escuchar mejor
             </p>
           </div>
         </section>

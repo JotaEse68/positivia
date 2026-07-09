@@ -13,9 +13,35 @@ export default function RatingStars({ slug }: Props) {
   const [redirecting, setRedirecting] = useState(false);
   const [error, setError] = useState(false);
 
+  function playDing(value: number) {
+    try {
+      const AudioContext =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof window.AudioContext })
+          .webkitAudioContext;
+      if (!AudioContext) return;
+
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = value >= 4 ? 880 : 520;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.045, ctx.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.2);
+    } catch {
+      // El sonido es un detalle agradable; si el navegador lo bloquea, seguimos.
+    }
+  }
+
   async function handleSelect(value: number) {
     if (rating !== null) return;
     setError(false);
+    playDing(value);
 
     if (value >= 4) {
       setRating(value);
@@ -47,11 +73,14 @@ export default function RatingStars({ slug }: Props) {
 
   if (rating !== null && rating >= 4 && !redirecting) {
     return (
-      <div className="mt-6 rounded-2xl bg-green-50 p-4 text-center">
-        <p className="text-lg font-semibold text-green-800">
-          Gracias por tu valoración
+      <div className="mt-6 rounded-3xl bg-[#EAF9EF] p-5 text-center">
+        <div className="pv-sparkle mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+          ✨
+        </div>
+        <p className="text-lg font-black text-[#1F7A4E]">
+          ¡Gracias por compartirlo!
         </p>
-        <p className="mt-1 text-sm text-green-700">
+        <p className="mt-1 text-sm text-[#337257]">
           Tu opinión ayuda mucho al negocio.
         </p>
       </div>
@@ -60,12 +89,15 @@ export default function RatingStars({ slug }: Props) {
 
   if (redirecting) {
     return (
-      <div className="mt-6 rounded-2xl bg-green-50 p-4 text-center">
-        <p className="animate-pulse text-lg font-semibold text-green-800">
-          Abriendo la reseña...
+      <div className="mt-6 rounded-3xl bg-[#EAF9EF] p-5 text-center">
+        <div className="pv-sparkle mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-sm">
+          ✨
+        </div>
+        <p className="animate-pulse text-lg font-black text-[#1F7A4E]">
+          Preparando tu reseña...
         </p>
-        <p className="mt-1 text-sm text-green-700">
-          Te llevamos al siguiente paso.
+        <p className="mt-1 text-sm text-[#337257]">
+          Te abrimos Google para que sea rápido.
         </p>
       </div>
     );
@@ -84,21 +116,21 @@ export default function RatingStars({ slug }: Props) {
             type="button"
             onClick={() => handleSelect(value)}
             aria-label={`${value} estrellas`}
-            className="group flex aspect-square items-center justify-center rounded-2xl border border-neutral-200 bg-white text-4xl shadow-sm transition-all hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-50 active:scale-95"
+            className="group flex aspect-square items-center justify-center rounded-3xl border border-[#FFE1A6] bg-white text-4xl shadow-sm shadow-[#C76A37]/5 transition-all hover:-translate-y-1 hover:border-[#FFC447] hover:bg-[#FFF6D8] active:scale-95"
           >
-            <span className="text-neutral-300 transition-colors group-hover:text-amber-400">
+            <span className="text-[#D7D0C5] transition-colors group-hover:text-[#FFC447]">
               ★
             </span>
           </button>
         ))}
       </div>
-      <div className="mt-3 flex justify-between px-1 text-xs font-medium text-neutral-500">
-        <span>No fue bien</span>
-        <span>Excelente</span>
+      <div className="mt-3 flex justify-between px-1 text-xs font-bold text-[#8A6B3E]">
+        <span>Algo falló</span>
+        <span>Me encantó</span>
       </div>
       {error && (
-        <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-600">
-          No se pudo enviar. Inténtalo de nuevo.
+        <p className="mt-4 rounded-2xl bg-[#FFF0ED] p-3 text-sm font-bold text-[#C04C3F]">
+          No hemos podido enviarlo. Prueba otra vez en un momento.
         </p>
       )}
     </div>
