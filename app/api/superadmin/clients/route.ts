@@ -5,6 +5,8 @@ import { supabaseAdmin } from "@/lib/supabase";
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const RATING_SETTING_FIELDS = [
+  "visual_theme",
+  "logo_display",
   "positive_redirect_title",
   "positive_redirect_body",
   "private_prompt_title",
@@ -20,6 +22,10 @@ function cleanSetting(value: unknown) {
   return typeof value === "string" && value.trim()
     ? value.trim().slice(0, 600)
     : null;
+}
+
+function cleanChoice(value: unknown, allowed: string[]) {
+  return typeof value === "string" && allowed.includes(value) ? value : null;
 }
 
 function isMissingSettingsTable(error: { code?: string; message?: string }) {
@@ -188,6 +194,11 @@ export async function PATCH(req: NextRequest) {
       for (const field of RATING_SETTING_FIELDS) {
         settings[field] = cleanSetting(body.rating_settings[field]);
       }
+      settings.visual_theme =
+        cleanChoice(body.rating_settings.visual_theme, ["sunrise", "hope", "coral"]) ||
+        "sunrise";
+      settings.logo_display =
+        cleanChoice(body.rating_settings.logo_display, ["large", "compact"]) || "large";
 
       const { error: settingsError } = await admin
         .from("business_rating_settings")

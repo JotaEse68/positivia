@@ -39,6 +39,10 @@ create index idx_businesses_parent on businesses (parent_business_id)
 -- en la pantalla que escanea el cliente final; solo service role escribe.
 create table business_rating_settings (
   business_id uuid primary key references businesses(id) on delete cascade,
+  visual_theme text not null default 'sunrise'
+    check (visual_theme in ('sunrise', 'hope', 'coral')),
+  logo_display text not null default 'large'
+    check (logo_display in ('large', 'compact')),
   positive_redirect_title text,
   positive_redirect_body text,
   private_prompt_title text,
@@ -61,6 +65,8 @@ create table feedback (
   ai_urgency urgency_type,           -- solo plan Pro
   ai_summary_theme text,             -- tema detectado por IA
   suggested_reply text,              -- borrador de respuesta (IA, solo Pro)
+  issue_categories text[] not null default '{}',
+  contact_info text,
   reply_sent boolean not null default false,
   discount_code text,                -- fase 2 de incentivos (preparado, sin lógica aún)
   created_at timestamptz not null default now()

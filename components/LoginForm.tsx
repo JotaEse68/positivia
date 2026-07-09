@@ -16,6 +16,7 @@ export default function LoginForm() {
   const redirect = searchParams.get("redirect") || "/admin/dashboard";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState<null | "password" | "magic">(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,14 +84,24 @@ export default function LoginForm() {
         </label>
         <label className="block text-sm text-neutral-300">
           Contraseña
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            type="password"
-            autoComplete="current-password"
-            className={input}
-          />
+          <span className="relative mt-1 block">
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              className={`${input} pr-16`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-neutral-400 hover:bg-neutral-800"
+              aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+            >
+              {showPassword ? "Ocultar" : "👁 Ver"}
+            </button>
+          </span>
         </label>
         <button
           type="submit"

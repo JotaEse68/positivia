@@ -31,7 +31,7 @@ async function getRatingCopy(businessId: string | undefined): Promise<RatingCopy
   const { data } = await supabase
     .from("business_rating_settings")
     .select(
-      "positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note"
+      "visual_theme, logo_display, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note"
     )
     .eq("business_id", businessId)
     .maybeSingle();
@@ -71,6 +71,15 @@ export default async function RatingPage({ params }: Props) {
   const copy = normalizeRatingCopy(
     business.id === "demo-business" ? defaultRatingCopy : await getRatingCopy(business.id)
   );
+  const themes: Record<string, string> = {
+    sunrise:
+      "radial-gradient(circle at 22% 24%, #FFE07A 0 18%, transparent 36%), linear-gradient(135deg, #FFB84D 0%, #FF7D66 42%, var(--brand) 100%)",
+    hope:
+      "radial-gradient(circle at 18% 20%, #FFF1A8 0 18%, transparent 36%), linear-gradient(135deg, #24A66D 0%, #A8D96F 45%, #FFB84D 100%)",
+    coral:
+      "radial-gradient(circle at 18% 22%, #FFE7B8 0 18%, transparent 36%), linear-gradient(135deg, #FF8F70 0%, #FF6B6B 46%, #23A96F 100%)",
+  };
+  const bannerBackground = themes[copy.visual_theme] ?? themes.sunrise;
 
   return (
     <main
@@ -82,8 +91,7 @@ export default async function RatingPage({ params }: Props) {
           <div
             className="absolute inset-x-0 top-0 h-48"
             style={{
-              background:
-                "radial-gradient(circle at 22% 24%, #FFE07A 0 18%, transparent 36%), linear-gradient(135deg, #FFB84D 0%, #FF7D66 42%, var(--brand) 100%)",
+              background: bannerBackground,
             }}
           />
           <div className="pv-sparkle absolute right-7 top-32 z-10 flex h-16 w-16 items-center justify-center rounded-full bg-white text-3xl shadow-xl shadow-[#D95B48]/20">
@@ -98,7 +106,11 @@ export default async function RatingPage({ params }: Props) {
                     alt={business.name}
                     width={58}
                     height={58}
-                    className="h-14 w-14 rounded-2xl border border-white/35 object-cover shadow-sm"
+                    className={`rounded-2xl border border-white/35 object-cover shadow-sm ${
+                      copy.logo_display === "large"
+                        ? "h-20 w-20 bg-white/20 p-1"
+                        : "h-14 w-14"
+                    }`}
                     unoptimized
                   />
                 ) : (

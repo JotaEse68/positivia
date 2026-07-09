@@ -10,6 +10,8 @@ type Complaint = {
   ai_urgency: "low" | "medium" | "high" | null;
   ai_summary_theme: string | null;
   suggested_reply: string | null;
+  issue_categories?: string[] | null;
+  contact_info?: string | null;
   reply_sent: boolean;
 };
 
@@ -22,6 +24,13 @@ const urgencyLabel: Record<string, string> = {
   high: "Urgente",
   medium: "Media",
   low: "Baja",
+};
+const issueLabel: Record<string, string> = {
+  product: "Producto / servicio",
+  attention: "Atención",
+  wait: "Tiempos",
+  cleanliness: "Limpieza",
+  other: "Otro",
 };
 
 function ComplaintCard({ initial, isPro }: { initial: Complaint; isPro: boolean }) {
@@ -100,6 +109,24 @@ function ComplaintCard({ initial, isPro }: { initial: Complaint; isPro: boolean 
       </div>
 
       <p className="mt-3 text-neutral-800">{c.comment || "(sin comentario)"}</p>
+      {!!c.issue_categories?.length && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {c.issue_categories.map((item) => (
+            <span
+              key={item}
+              className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-800"
+            >
+              {issueLabel[item] ?? item}
+            </span>
+          ))}
+        </div>
+      )}
+      {c.contact_info && (
+        <p className="mt-3 rounded-xl bg-green-50 p-3 text-sm font-medium text-green-800">
+          Quiere hablar con un encargado:{" "}
+          <span className="break-all font-semibold">{c.contact_info}</span>
+        </p>
+      )}
       {isPro && c.ai_summary_theme && (
         <p className="mt-1 text-xs text-neutral-400">Tema: {c.ai_summary_theme}</p>
       )}

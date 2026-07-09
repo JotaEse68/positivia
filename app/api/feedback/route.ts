@@ -2,6 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDemoBusiness } from "@/lib/demo";
 import { supabaseAdmin } from "@/lib/supabase";
 
+const ISSUE_CATEGORIES = new Set([
+  "product",
+  "attention",
+  "wait",
+  "cleanliness",
+  "other",
+]);
+
+function cleanIssueCategories(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => ISSUE_CATEGORIES.has(item))
+    .slice(0, 5);
+}
+
+function isMissingFeedbackResolutionColumns(error: { message?: string; code?: string }) {
+  return (
+    error.code === "42703" ||
+    error.message?.includes("issue_categories") ||
+    error.message?.includes("contact_info")
+  );
+}
+
 // Recibe rating (+ comentario opcional) desde la landing pública y
 // decide el routing: 4-5★ devuelve el link de reseña de Google,
 // 1-3★ queda capturado en privado y dispara la alerta al dueño.
@@ -13,6 +38,11 @@ export async function POST(req: NextRequest) {
     const comment =
       typeof body?.comment === "string" && body.comment.trim()
         ? body.comment.trim().slice(0, 2000)
+        : null;
+    const issueCategories = cleanIssueCategories(body?.issueCategories);
+    const contactInfo =
+      typeof body?.contactInfo === "string" && body.contactInfo.trim()
+        ? body.contactInfo.trim().slice(0, 240)
         : null;
 
     if (!slug || !Number.isInteger(rating) || rating < 1 || rating > 5) {
@@ -40,19 +70,42 @@ export async function POST(req: NextRequest) {
     }
 
     const isPositive = rating >= 4;
-    const { data: feedback, error: insertError } = await supabase
+    const insertPayload = {
+      business_id: business.id,
+      rating,
+      comment,
+      status: isPositive ? "public_redirected" : "private_captured",
+      issue_categories: issueCategories,
+      contact_info: contactInfo,
+    };
+
+    let { data: feedback, error: insertError } = await supabase
       .from("feedback")
-      .insert({
+      .insert(insertPayload)
+      .select("id")
+      .single();
+
+    if (insertError && isMissingFeedbackResolutionColumns(insertError)) {
+      const fallbackPayload = {
         business_id: business.id,
         rating,
         comment,
         status: isPositive ? "public_redirected" : "private_captured",
-      })
-      .select("id")
-      .single();
+      };
+      const fallback = await supabase
+        .from("feedback")
+        .insert(fallbackPayload)
+        .select("id")
+        .single();
+      feedback = fallback.data;
+      insertError = fallback.error;
+    }
 
     if (insertError) {
       console.error("[feedback] insert error:", insertError.message);
+      return NextResponse.json({ error: "Error al guardar" }, { status: 500 });
+    }
+    if (!feedback) {
       return NextResponse.json({ error: "Error al guardar" }, { status: 500 });
     }
 

@@ -46,6 +46,8 @@ export default function ClientEditForm({
       plan: String(form.get("plan") ?? ""),
       plan_status: String(form.get("plan_status") ?? ""),
       rating_settings: {
+        visual_theme: String(form.get("visual_theme") ?? ""),
+        logo_display: String(form.get("logo_display") ?? ""),
         positive_redirect_title: String(form.get("positive_redirect_title") ?? ""),
         positive_redirect_body: String(form.get("positive_redirect_body") ?? ""),
         private_prompt_title: String(form.get("private_prompt_title") ?? ""),
@@ -185,6 +187,29 @@ export default function ClientEditForm({
         </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <label className="text-sm text-neutral-600">
+            Estilo de color
+            <select
+              name="visual_theme"
+              defaultValue={ratingSettings.visual_theme}
+              className={input}
+            >
+              <option value="sunrise">Amanecer: amarillo, coral y verde</option>
+              <option value="hope">Esperanza: verde cálido y sol</option>
+              <option value="coral">Coral: más energía y cercanía</option>
+            </select>
+          </label>
+          <label className="text-sm text-neutral-600">
+            Logo en el banner
+            <select
+              name="logo_display"
+              defaultValue={ratingSettings.logo_display}
+              className={input}
+            >
+              <option value="large">Grande</option>
+              <option value="compact">Compacto</option>
+            </select>
+          </label>
           <label className="text-sm text-neutral-600">
             Título si la experiencia fue buena
             <input

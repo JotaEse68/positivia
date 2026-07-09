@@ -1,5 +1,9 @@
 create table if not exists business_rating_settings (
   business_id uuid primary key references businesses(id) on delete cascade,
+  visual_theme text not null default 'sunrise'
+    check (visual_theme in ('sunrise', 'hope', 'coral')),
+  logo_display text not null default 'large'
+    check (logo_display in ('large', 'compact')),
   positive_redirect_title text,
   positive_redirect_body text,
   private_prompt_title text,

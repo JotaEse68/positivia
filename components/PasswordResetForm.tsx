@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 
 type Mode = "request" | "sent" | "update" | "done";
@@ -19,8 +19,34 @@ export default function PasswordResetForm({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialMode !== "update") return;
+
+    async function recoverSession() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get("code");
+      if (!code) return;
+
+      setBusy(true);
+      setError(null);
+      try {
+        const supabase = createBrowserSupabase();
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) throw error;
+        window.history.replaceState(null, "", "/admin/reset-password?mode=update");
+      } catch (err) {
+        setError(errorMessage(err));
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    void recoverSession();
+  }, [initialMode]);
 
   async function requestReset(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,7 +55,7 @@ export default function PasswordResetForm({
     try {
       const supabase = createBrowserSupabase();
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth/callback?next=/admin/reset-password?mode=update`,
+        redirectTo: `${window.location.origin}/admin/reset-password?mode=update`,
       });
       if (error) throw error;
       setMode("sent");
@@ -103,15 +129,25 @@ export default function PasswordResetForm({
         <form onSubmit={updatePassword} className="mt-5 space-y-4">
           <label className="block text-sm text-neutral-600">
             Nueva contraseña
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              type="password"
-              minLength={8}
-              autoComplete="new-password"
-              className={input}
-            />
+            <span className="relative mt-1 block">
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                type={showPassword ? "text" : "password"}
+                minLength={8}
+                autoComplete="new-password"
+                className={`${input} pr-14`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-neutral-500 hover:bg-neutral-100"
+                aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
+              >
+                {showPassword ? "Ocultar" : "👁 Ver"}
+              </button>
+            </span>
           </label>
           <button
             type="submit"
