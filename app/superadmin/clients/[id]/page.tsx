@@ -167,6 +167,18 @@ export default async function ClientDetailPage({
                   Descargar solo QR PDF
                 </a>
                 <a
+                  href={`/api/qr-print?slug=${b.slug}&layout=ticket`}
+                  className="rounded-lg border px-4 py-2 text-sm font-bold text-neutral-700"
+                >
+                  Descargar ticket 80 mm
+                </a>
+                <a
+                  href={`/api/qr-print?slug=${b.slug}&layout=table`}
+                  className="rounded-lg border px-4 py-2 text-sm font-bold text-neutral-700"
+                >
+                  Descargar servilletero
+                </a>
+                <a
                   href={`/api/qr?slug=${b.slug}&download=1`}
                   className="rounded-lg border px-4 py-2 text-sm font-bold text-neutral-700"
                 >

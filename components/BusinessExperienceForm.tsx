@@ -31,6 +31,7 @@ export default function BusinessExperienceForm({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<"qr" | "brand" | "growth">("qr");
 
   async function copyQrUrl() {
     try {
@@ -73,6 +74,11 @@ export default function BusinessExperienceForm({
   const input =
     "mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2.5 text-sm text-neutral-900 shadow-sm focus:border-[#24A66D] focus:outline-none focus:ring-2 focus:ring-[#BFE7CF]";
   const label = "text-sm font-semibold text-neutral-700";
+  const tabs = [
+    { id: "qr", label: "Mi QR" },
+    { id: "brand", label: "Mi marca" },
+    { id: "growth", label: "Conseguir reseñas" },
+  ] as const;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -112,6 +118,31 @@ export default function BusinessExperienceForm({
         </div>
       </div>
 
+      <nav className="grid gap-2 rounded-2xl border bg-white p-2 shadow-sm sm:grid-cols-3">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`rounded-xl px-4 py-3 text-sm font-black transition-colors ${
+              activeTab === tab.id
+                ? "bg-[#203126] text-white"
+                : "text-neutral-600 hover:bg-neutral-50"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+      {(message || error) && (
+        <div className="rounded-xl border bg-white px-4 py-3 shadow-sm">
+          {message && <p className="text-sm font-bold text-[#1F7A4E]">{message}</p>}
+          {error && <p className="text-sm font-bold text-red-600">{error}</p>}
+        </div>
+      )}
+
+      {activeTab === "qr" && (
+        <>
       <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
         <div className="bg-gradient-to-br from-[#FFBE4D] via-[#FF7D66] to-[#24A66D] p-5 text-white">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-white/75">
@@ -232,6 +263,36 @@ export default function BusinessExperienceForm({
       </section>
 
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-black text-neutral-950">Kit para imprimir</h2>
+        <p className="mt-1 text-sm text-neutral-500">
+          PDFs listos para imprenta o Canva. Elige el formato según dónde irá el QR.
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          <a href={`/api/qr-print?slug=${business.slug}&size=a4&layout=full`} className="rounded-lg bg-neutral-950 px-4 py-2 text-center text-sm font-black text-white">
+            Cartel PDF A4
+          </a>
+          <a href={`/api/qr-print?slug=${business.slug}&size=a3&layout=full`} className="rounded-lg border px-4 py-2 text-center text-sm font-black text-neutral-800">
+            Cartel PDF A3
+          </a>
+          <a href={`/api/qr-print?slug=${business.slug}&layout=ticket`} className="rounded-lg border px-4 py-2 text-center text-sm font-black text-neutral-800">
+            Ticket 80 mm PDF
+          </a>
+          <a href={`/api/qr-print?slug=${business.slug}&layout=table`} className="rounded-lg border px-4 py-2 text-center text-sm font-black text-neutral-800">
+            Servilletero 10x15 PDF
+          </a>
+          <a href={`/api/qr-print?slug=${business.slug}&size=a4&layout=qr`} className="rounded-lg border px-4 py-2 text-center text-sm font-black text-neutral-800">
+            Solo QR PDF
+          </a>
+          <a href={`/api/qr?slug=${business.slug}&download=1`} className="rounded-lg border px-4 py-2 text-center text-sm font-black text-neutral-800">
+            Solo QR PNG
+          </a>
+        </div>
+      </section>
+        </>
+      )}
+
+      {activeTab === "brand" && (
+      <section className="rounded-2xl border bg-white p-5 shadow-sm">
         <h2 className="text-lg font-black text-neutral-950">Marca y primera impresión</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className={label}>
@@ -317,13 +378,40 @@ export default function BusinessExperienceForm({
           </label>
         </div>
       </section>
+      )}
 
+      {activeTab === "growth" && (
       <section className="rounded-2xl border bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-black text-neutral-950">Preguntas, premio y mensajes</h2>
+        <h2 className="text-lg font-black text-neutral-950">Cómo conseguir más reseñas</h2>
         <p className="mt-1 text-sm text-neutral-500">
-          El detalle puede ser un sorteo, café, chupito o atención especial, pero el texto
-          debe pedir opinión, no comprar reseñas en Google.
+          El QR funciona cuando se pide bien. Configura el motivo para escanear y
+          deja claro qué pasa si algo salió mal.
         </p>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {[
+            {
+              title: "El camarero lo pide",
+              body: "Frase de 3 segundos: '¿Nos ayudas con una valoración? Es tocar una estrella y listo.'",
+            },
+            {
+              title: "Va donde el cliente mira",
+              body: "Ticket, servilletero, mantel de papel, recepción o tarjeta de mesa. La pared suele fallar.",
+            },
+            {
+              title: "Da un motivo honesto",
+              body: "Sorteo de cena, café, chupito, upgrade o descuento. Pide opinión, no compres reseñas.",
+            },
+            {
+              title: "Cero fricción",
+              body: "Sin registro, sin app y sin login. Si fue mal, lo recibe el responsable en privado.",
+            },
+          ].map((item) => (
+            <article key={item.title} className="rounded-2xl border border-[#E8DEC7] bg-[#FFF8E7] p-4">
+              <h3 className="font-black text-[#5A3D25]">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-[#76543A]">{item.body}</p>
+            </article>
+          ))}
+        </div>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <label className={`${label} sm:col-span-2`}>
             Detalle visible en la pantalla QR
@@ -421,10 +509,8 @@ export default function BusinessExperienceForm({
             />
           </label>
         </div>
-
-        {message && <p className="mt-4 text-sm font-bold text-[#1F7A4E]">{message}</p>}
-        {error && <p className="mt-4 text-sm font-bold text-red-600">{error}</p>}
       </section>
+      )}
     </form>
   );
 }

@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 export const dynamic = "force-dynamic";
 
 type PdfSize = "a4" | "a3";
-type PdfLayout = "full" | "qr";
+type PdfLayout = "full" | "qr" | "ticket" | "table";
 
 const PAGE: Record<PdfSize, { w: number; h: number; label: string }> = {
   a4: { w: 595.28, h: 841.89, label: "A4" },
@@ -107,7 +107,12 @@ export async function GET(req: NextRequest) {
     if (!slug) {
       return NextResponse.json({ error: "slug requerido" }, { status: 400 });
     }
-    const page = PAGE[size] ?? PAGE.a4;
+    const page =
+      layout === "ticket"
+        ? { w: 226.77, h: 420.94, label: "ticket-80mm" }
+        : layout === "table"
+          ? { w: 283.46, h: 425.2, label: "10x15" }
+          : PAGE[size] ?? PAGE.a4;
 
     const demo = getDemoBusiness(slug);
     const business =
@@ -150,6 +155,51 @@ export async function GET(req: NextRequest) {
         x: margin,
         y: margin,
         size: 10,
+        color: "#8A6B3E",
+      });
+    } else if (layout === "ticket" || layout === "table") {
+      const isTicket = layout === "ticket";
+      const headerH = isTicket ? 80 : 104;
+      const qrSize = Math.min(contentW * (isTicket ? 0.82 : 0.74), page.h * 0.48);
+      const qrX = (page.w - qrSize) / 2;
+      const qrY = isTicket ? 130 : 132;
+
+      content += rect(0, 0, page.w, page.h, "#FFFFFF");
+      content += rect(0, page.h - headerH, page.w, headerH, brand);
+      content += text({
+        value: isTicket ? "Tu opinion nos ayuda" : "Escanea y cuentanos como fue",
+        x: margin,
+        y: page.h - 34,
+        size: isTicket ? 15 : 18,
+        color: "#FFFFFF",
+      });
+      content += text({
+        value: business.name,
+        x: margin,
+        y: page.h - 62,
+        size: isTicket ? 22 : 27,
+        color: "#FFFFFF",
+      });
+      content += qrCommands(target, qrX, qrY, qrSize);
+      content += text({
+        value: "Un toque. Sin registro.",
+        x: margin,
+        y: isTicket ? 86 : 82,
+        size: isTicket ? 12 : 15,
+        color: "#203126",
+      });
+      content += text({
+        value: "Si algo fallo, llega privado al responsable.",
+        x: margin,
+        y: isTicket ? 62 : 56,
+        size: isTicket ? 8.5 : 10,
+        color: "#337257",
+      });
+      content += text({
+        value: target.replace(/^https?:\/\//, ""),
+        x: margin,
+        y: 26,
+        size: isTicket ? 7 : 8,
         color: "#8A6B3E",
       });
     } else {
@@ -222,7 +272,7 @@ export async function GET(req: NextRequest) {
       headers: {
         "Content-Type": "application/pdf",
         "Cache-Control": "public, max-age=3600",
-        "Content-Disposition": `attachment; filename="${layout === "qr" ? "qr" : "cartel"}-${business.slug}-${page.label}.pdf"`,
+        "Content-Disposition": `attachment; filename="${layout === "qr" ? "qr" : layout === "ticket" ? "ticket" : layout === "table" ? "servilletero" : "cartel"}-${business.slug}-${page.label}.pdf"`,
       },
     });
   } catch (err) {
