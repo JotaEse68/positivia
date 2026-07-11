@@ -19,6 +19,7 @@ const RATING_SETTING_FIELDS = [
   "private_thanks_body",
   "recovery_hint",
   "appreciation_note",
+  "reward_text",
 ] as const;
 
 function cleanSetting(value: FormDataEntryValue | null) {
@@ -260,6 +261,7 @@ export async function PATCH(req: NextRequest) {
       cleanChoice(form.get("visual_theme"), ["sunrise", "hope", "coral"]) || "sunrise";
     settings.logo_display =
       cleanChoice(form.get("logo_display"), ["large", "compact"]) || "large";
+    settings.reward_enabled = form.get("reward_enabled") === "on";
     await saveRatingSettingsSnapshot(businessId, settings);
 
     const { error: settingsError } = await admin
