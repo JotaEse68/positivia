@@ -3,6 +3,7 @@ import Image from "next/image";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isSuperadminUser } from "@/lib/superadmin";
+import { linkBusinessesForCurrentUser } from "@/lib/business-access";
 
 export const dynamic = "force-dynamic";
 
@@ -12,28 +13,6 @@ type Business = {
   slug: string | null;
   logo_url: string | null;
 };
-
-async function linkBusinessesForCurrentUser(user: { id: string; email?: string | null }) {
-  const email = user.email?.trim();
-  if (!user?.id || !email) return;
-
-  const admin = supabaseAdmin();
-  const { data: matches } = await admin
-    .from("businesses")
-    .select("id")
-    .ilike("email_owner", email);
-
-  if (!matches?.length) return;
-
-  await admin.from("admin_users").upsert(
-    matches.map((business) => ({
-      business_id: business.id,
-      clerk_user_id: user.id,
-      role: "owner",
-    })),
-    { onConflict: "business_id,clerk_user_id" }
-  );
-}
 
 export default async function QrPage({
   searchParams,

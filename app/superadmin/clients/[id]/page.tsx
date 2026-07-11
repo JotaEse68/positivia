@@ -78,7 +78,7 @@ export default async function ClientDetailPage({
   const { data: ratingSettings } = await supabaseAdmin()
     .from("business_rating_settings")
     .select(
-      "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note"
+      "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note, reward_enabled, reward_text"
     )
     .eq("business_id", b.id)
     .maybeSingle();
