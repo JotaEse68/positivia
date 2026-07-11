@@ -44,7 +44,6 @@ export async function POST(req: NextRequest) {
     mode: "subscription",
     "line_items[0][price]": price,
     "line_items[0][quantity]": "1",
-    "consent_collection[terms_of_service]": "required",
     allow_promotion_codes: "true",
     "metadata[plan]": plan,
     success_url: `${base}/bienvenida?session_id={CHECKOUT_SESSION_ID}`,
