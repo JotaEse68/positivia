@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDemoBusiness } from "@/lib/demo";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 function cleanIssueCategories(value: unknown) {
   if (!Array.isArray(value)) return [];
@@ -37,6 +38,10 @@ async function readJsonBody(req: NextRequest) {
 // 1-3★ queda capturado en privado y dispara la alerta al dueño.
 export async function POST(req: NextRequest) {
   try {
+    if (isRateLimited(`feedback:${getClientIp(req)}`, 20, 10 * 60_000)) {
+      return NextResponse.json({ error: "demasiadas_peticiones" }, { status: 429 });
+    }
+
     const body = await readJsonBody(req);
     const slug = typeof body?.slug === "string" ? body.slug : null;
     const rating = Number(body?.rating);
@@ -125,9 +130,13 @@ export async function POST(req: NextRequest) {
     // respuesta al cliente final.
     try {
       const origin = req.nextUrl.origin;
+      const secret = process.env.CRON_SECRET;
       void fetch(`${origin}/api/notify`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+        },
         body: JSON.stringify({ feedbackId: feedback.id }),
       }).catch(() => {});
     } catch {
