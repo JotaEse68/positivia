@@ -20,12 +20,24 @@ function isMissingFeedbackResolutionColumns(error: { message?: string; code?: st
   );
 }
 
+// navigator.sendBeacon envía el body como texto plano (Content-Type:
+// text/plain), no como JSON: leemos el texto crudo y lo parseamos
+// nosotros mismos en vez de depender de la cabecera.
+async function readJsonBody(req: NextRequest) {
+  try {
+    const text = await req.text();
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 // Recibe rating (+ comentario opcional) desde la landing pública y
 // decide el routing: 4-5★ devuelve el link de reseña de Google,
 // 1-3★ queda capturado en privado y dispara la alerta al dueño.
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => null);
+    const body = await readJsonBody(req);
     const slug = typeof body?.slug === "string" ? body.slug : null;
     const rating = Number(body?.rating);
     const comment =

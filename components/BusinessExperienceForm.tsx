@@ -423,6 +423,24 @@ export default function BusinessExperienceForm({
               className={input}
             />
           </label>
+          <label className={`${label} flex items-center gap-2 sm:col-span-2`}>
+            <input
+              type="checkbox"
+              name="reward_enabled"
+              defaultChecked={ratingSettings.reward_enabled}
+              className="h-4 w-4 rounded border-neutral-300"
+            />
+            Ofrecer recompensa por valorar (solo 4-5★)
+          </label>
+          <label className={`${label} sm:col-span-2`}>
+            Texto de la recompensa
+            <input
+              name="reward_text"
+              defaultValue={ratingSettings.reward_text}
+              placeholder="Café gratis en tu próxima visita · CAFE10"
+              className={input}
+            />
+          </label>
           <label className={label}>
             Opciones si algo falló
             <textarea

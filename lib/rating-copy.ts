@@ -12,6 +12,8 @@ export type RatingCopy = {
   private_thanks_body: string;
   recovery_hint: string;
   appreciation_note: string;
+  reward_enabled: boolean;
+  reward_text: string;
 };
 
 export const defaultRatingCopy: RatingCopy = {
@@ -33,6 +35,8 @@ export const defaultRatingCopy: RatingCopy = {
   recovery_hint:
     "Si quieres hablar con un encargado, puedes dejar tu teléfono o email y te contactarán.",
   appreciation_note: "Hecho con PositivIA para escuchar mejor",
+  reward_enabled: false,
+  reward_text: "",
 };
 
 export function normalizeRatingCopy(copy?: Partial<RatingCopy> | null): RatingCopy {
@@ -68,5 +72,7 @@ export function normalizeRatingCopy(copy?: Partial<RatingCopy> | null): RatingCo
     recovery_hint: copy?.recovery_hint?.trim() || defaultRatingCopy.recovery_hint,
     appreciation_note:
       copy?.appreciation_note?.trim() || defaultRatingCopy.appreciation_note,
+    reward_enabled: Boolean(copy?.reward_enabled) && Boolean(copy?.reward_text?.trim()),
+    reward_text: copy?.reward_text?.trim() || defaultRatingCopy.reward_text,
   };
 }
