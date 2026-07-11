@@ -15,72 +15,28 @@ async function getBusiness(slug: string) {
   const slugCandidates = slug === "demo" ? ["demo", DEMO_SLUG] : [slug];
   const fields =
     "id, slug, name, logo_url, banner_url, color_primary, google_review_link, plan_status";
-  const fallbackFields =
-    "id, slug, name, logo_url, color_primary, google_review_link, plan_status";
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("businesses")
     .select(fields)
     .in("slug", slugCandidates);
 
-  if (error?.code === "42703") {
-    const fallback = await supabase
-      .from("businesses")
-      .select(fallbackFields)
-      .in("slug", slugCandidates);
-    return fallback.data?.find((item) => item.slug === slug) ?? fallback.data?.[0] ?? getDemoBusiness(slug);
-  }
-
   return data?.find((item) => item.slug === slug) ?? data?.[0] ?? getDemoBusiness(slug);
-}
-
-async function getStoredBannerUrl(slug: string) {
-  const supabase = supabaseAnon();
-  const { data, error } = await supabase.storage
-    .from("logos")
-    .list("", { search: `banner-${slug}`, limit: 1 });
-
-  if (error || !data?.some((item) => item.name === `banner-${slug}`)) return null;
-  return supabase.storage.from("logos").getPublicUrl(`banner-${slug}`).data.publicUrl;
 }
 
 async function getRatingCopy(businessId: string | undefined): Promise<RatingCopy> {
   if (!businessId) return defaultRatingCopy;
 
   const supabase = supabaseAnon();
-  async function getStoredCopy() {
-    const { data } = await supabase.storage
-      .from("logos")
-      .download(`rating-settings-${businessId}.json`);
-    if (!data) return null;
-    try {
-      return JSON.parse(await data.text()) as Partial<RatingCopy>;
-    } catch {
-      return null;
-    }
-  }
-
   const fields =
-    "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
-  const fallbackFields =
-    "visual_theme, logo_display, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
+    "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note, reward_enabled, reward_text";
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("business_rating_settings")
     .select(fields)
     .eq("business_id", businessId)
     .maybeSingle();
 
-  if (error?.code === "42703") {
-    const fallback = await supabase
-      .from("business_rating_settings")
-      .select(fallbackFields)
-      .eq("business_id", businessId)
-      .maybeSingle();
-
-    return normalizeRatingCopy(fallback.data ?? (await getStoredCopy()));
-  }
-
-  return normalizeRatingCopy(data ?? (await getStoredCopy()));
+  return normalizeRatingCopy(data);
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -112,11 +68,7 @@ export default async function RatingPage({ params }: Props) {
   }
 
   const brand = business.color_primary ?? "#23A96F";
-  const savedBannerUrl =
-    "banner_url" in business && typeof business.banner_url === "string"
-      ? business.banner_url
-      : null;
-  const bannerUrl = savedBannerUrl ?? (await getStoredBannerUrl(business.slug));
+  const bannerUrl = "banner_url" in business ? (business.banner_url ?? null) : null;
   const copy = normalizeRatingCopy(
     business.id === "demo-business" ? defaultRatingCopy : await getRatingCopy(business.id)
   );

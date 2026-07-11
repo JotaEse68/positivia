@@ -68,30 +68,13 @@ export default async function DashboardPage({
   const isPro = selected.plan === "pro";
 
   // Feedback del negocio seleccionado (RLS-scoped).
-  const { data: initialFeedback, error: feedbackError } = await db
+  const { data: feedback } = await db
     .from("feedback")
     .select(
       "id, rating, comment, status, ai_urgency, ai_summary_theme, suggested_reply, issue_categories, contact_info, reply_sent, created_at"
     )
     .eq("business_id", selected.id)
     .order("created_at", { ascending: false });
-  let feedback = initialFeedback;
-
-  if (feedbackError?.code === "42703") {
-    const fallback = await db
-      .from("feedback")
-      .select(
-        "id, rating, comment, status, ai_urgency, ai_summary_theme, suggested_reply, reply_sent, created_at"
-      )
-      .eq("business_id", selected.id)
-      .order("created_at", { ascending: false });
-    feedback =
-      fallback.data?.map((row) => ({
-        ...row,
-        issue_categories: null,
-        contact_info: null,
-      })) ?? null;
-  }
 
   const rows = feedback ?? [];
   const publicCount = rows.filter((f) => f.status === "public_redirected").length;
