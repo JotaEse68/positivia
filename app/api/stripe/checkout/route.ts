@@ -3,6 +3,23 @@ import { getStripePriceForPlan, getStripeSecretForRequests } from "@/lib/stripe-
 
 export const dynamic = "force-dynamic";
 
+// La landing de venta vive en positivia.net (WordPress), otro origen: el
+// botón de precio hace fetch() a este endpoint desde ahi, asi que necesita
+// CORS explicito o el navegador bloquea la respuesta.
+const ALLOWED_ORIGIN = "https://positivia.net";
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+  };
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders() });
+}
+
 export async function POST(req: NextRequest) {
   let body: { plan?: string };
   try {
@@ -16,7 +33,10 @@ export async function POST(req: NextRequest) {
   const price = getStripePriceForPlan(plan);
 
   if (!secret || !price) {
-    return NextResponse.json({ error: "billing no configurado" }, { status: 503 });
+    return NextResponse.json(
+      { error: "billing no configurado" },
+      { status: 503, headers: corsHeaders() }
+    );
   }
 
   const base = (process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "")) || req.nextUrl.origin;
@@ -42,13 +62,19 @@ export async function POST(req: NextRequest) {
   });
 
   if (!res.ok) {
-    return NextResponse.json({ error: "No se pudo crear el checkout" }, { status: 502 });
+    return NextResponse.json(
+      { error: "No se pudo crear el checkout" },
+      { status: 502, headers: corsHeaders() }
+    );
   }
 
   const session = (await res.json()) as { url?: string };
   if (!session.url) {
-    return NextResponse.json({ error: "No se pudo crear el checkout" }, { status: 502 });
+    return NextResponse.json(
+      { error: "No se pudo crear el checkout" },
+      { status: 502, headers: corsHeaders() }
+    );
   }
 
-  return NextResponse.json({ url: session.url });
+  return NextResponse.json({ url: session.url }, { headers: corsHeaders() });
 }
