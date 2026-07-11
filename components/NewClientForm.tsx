@@ -12,6 +12,7 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{
+    id: string;
     slug: string;
     emailOwner: string;
     googleReviewLink: string;
@@ -31,6 +32,7 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
       setCreated({
+        id: data.id,
         slug: data.slug,
         emailOwner: String(form.get("email_owner") ?? ""),
         googleReviewLink: String(form.get("google_review_link") ?? ""),
@@ -86,6 +88,7 @@ export default function NewClientForm({ parents }: { parents: Parent[] }) {
         </div>
         <OnboardingChecklist
           business={{
+            id: created.id,
             slug: created.slug,
             google_review_link: created.googleReviewLink,
             email_owner: created.emailOwner,

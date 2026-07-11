@@ -1,5 +1,6 @@
 type ChecklistBusiness = {
-  slug: string;
+  id?: string;
+  slug: string | null;
   google_review_link?: string | null;
   logo_url?: string | null;
   banner_url?: string | null;
@@ -14,35 +15,47 @@ export default function OnboardingChecklist({
   business: ChecklistBusiness;
   qrUrl?: string;
 }) {
-  const url = qrUrl ?? `/r/${business.slug}`;
+  const experienceHref = business.id
+    ? `/admin/experience?b=${business.id}`
+    : "/admin/onboarding";
+  const url = qrUrl ?? (business.slug ? `/r/${business.slug}` : undefined);
+
   const items = [
+    {
+      label: "Completar el asistente de alta",
+      done: Boolean(business.slug && business.google_review_link),
+      href: "/admin/onboarding",
+    },
     {
       label: "Añadir enlace de Google",
       done: Boolean(business.google_review_link),
-      href: `/superadmin/clients/${business.slug}`,
+      href: experienceHref,
     },
     {
       label: "Subir logo o banner",
       done: Boolean(business.logo_url || business.banner_url),
-      href: `/superadmin/clients/${business.slug}`,
+      href: experienceHref,
     },
-    {
-      label: "Probar pantalla QR",
-      done: false,
-      href: url,
-      external: true,
-    },
-    {
-      label: "Descargar cartel",
-      done: false,
-      href: `/api/qr-print?slug=${business.slug}&size=a4&layout=full`,
-      external: true,
-    },
-    {
-      label: "Copiar guion del equipo",
-      done: false,
-      href: "#guion-equipo",
-    },
+    ...(url
+      ? [
+          {
+            label: "Probar pantalla QR",
+            done: false,
+            href: url,
+            external: true,
+          },
+        ]
+      : []),
+    ...(business.slug
+      ? [
+          {
+            label: "Descargar cartel",
+            done: false,
+            href: `/api/qr-print?slug=${business.slug}&size=a4&layout=full`,
+            external: true,
+          },
+        ]
+      : []),
   ];
 
   return (
