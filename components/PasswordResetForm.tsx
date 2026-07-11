@@ -83,13 +83,13 @@ export default function PasswordResetForm({
   }
 
   const input =
-    "mt-1 w-full rounded-lg border border-neutral-300 bg-white p-2.5 text-sm text-neutral-900 focus:border-green-500 focus:outline-none";
+    "mt-1 w-full rounded-lg border border-[#102D2A]/20 bg-white p-2.5 text-sm text-[#102D2A] focus:border-[#27765B] focus:outline-none";
 
   if (mode === "sent") {
     return (
-      <div className="rounded-2xl border bg-white p-6">
-        <h2 className="text-lg font-semibold text-neutral-900">Email enviado</h2>
-        <p className="mt-2 text-sm text-neutral-500">
+      <div className="rounded-2xl border border-[#102D2A]/10 bg-white p-6">
+        <h2 className="text-lg font-semibold text-[#102D2A]">Email enviado</h2>
+        <p className="mt-2 text-sm text-[#53655E]">
           Abre el enlace de recuperación que te hemos enviado. Te devolverá a
           PositivIA para poner una contraseña nueva.
         </p>
@@ -99,14 +99,14 @@ export default function PasswordResetForm({
 
   if (mode === "done") {
     return (
-      <div className="rounded-2xl border bg-white p-6">
-        <h2 className="text-lg font-semibold text-neutral-900">Contraseña cambiada</h2>
-        <p className="mt-2 text-sm text-neutral-500">
+      <div className="rounded-2xl border border-[#102D2A]/10 bg-white p-6">
+        <h2 className="text-lg font-semibold text-[#102D2A]">Contraseña cambiada</h2>
+        <p className="mt-2 text-sm text-[#53655E]">
           Ya puedes entrar con tu nueva contraseña.
         </p>
         <Link
           href="/admin/dashboard"
-          className="mt-5 inline-block rounded-lg bg-neutral-950 px-4 py-2 text-sm font-semibold text-white"
+          className="mt-5 inline-block rounded-lg bg-[#102D2A] px-4 py-2 text-sm font-semibold text-white"
         >
           Ir al panel
         </Link>
@@ -115,11 +115,11 @@ export default function PasswordResetForm({
   }
 
   return (
-    <div className="rounded-2xl border bg-white p-6">
-      <h2 className="text-lg font-semibold text-neutral-900">
+    <div className="rounded-2xl border border-[#102D2A]/10 bg-white p-6">
+      <h2 className="text-lg font-semibold text-[#102D2A]">
         {mode === "update" ? "Nueva contraseña" : "Recuperar contraseña"}
       </h2>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-[#53655E]">
         {mode === "update"
           ? "Escribe la contraseña nueva para tu cuenta."
           : "Te enviaremos un enlace seguro al email de acceso."}
@@ -127,7 +127,7 @@ export default function PasswordResetForm({
 
       {mode === "update" ? (
         <form onSubmit={updatePassword} className="mt-5 space-y-4">
-          <label className="block text-sm text-neutral-600">
+          <label className="block text-sm text-[#53655E]">
             Nueva contraseña
             <span className="relative mt-1 block">
               <input
@@ -142,7 +142,7 @@ export default function PasswordResetForm({
               <button
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-neutral-500 hover:bg-neutral-100"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-semibold text-[#53655E] hover:bg-[#FFF9EA]"
                 aria-label={showPassword ? "Ocultar contraseña" : "Ver contraseña"}
               >
                 {showPassword ? "Ocultar" : "👁 Ver"}
@@ -152,14 +152,14 @@ export default function PasswordResetForm({
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="w-full rounded-lg bg-[#102D2A] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {busy ? "Guardando..." : "Cambiar contraseña"}
           </button>
         </form>
       ) : (
         <form onSubmit={requestReset} className="mt-5 space-y-4">
-          <label className="block text-sm text-neutral-600">
+          <label className="block text-sm text-[#53655E]">
             Email de acceso
             <input
               value={email}
@@ -173,7 +173,7 @@ export default function PasswordResetForm({
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-lg bg-neutral-950 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            className="w-full rounded-lg bg-[#102D2A] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {busy ? "Enviando..." : "Enviar enlace"}
           </button>

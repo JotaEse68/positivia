@@ -109,20 +109,20 @@ export default async function AccountPage({
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#27765B]">
             Cuenta del cliente
           </p>
-          <h1 className="mt-1 text-3xl font-black tracking-tight text-neutral-950">
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-[#102D2A]">
             Cuenta, pagos y facturas
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#53655E]">
             Aqui el negocio controla su acceso y su suscripcion mensual:
             renovar, pagar, cancelar desde el portal y descargar facturas.
           </p>
         </div>
         <Link
           href="/admin/experience"
-          className="inline-flex items-center justify-center rounded-xl bg-neutral-950 px-4 py-2.5 text-sm font-bold text-white"
+          className="inline-flex items-center justify-center rounded-xl bg-[#102D2A] px-4 py-2.5 text-sm font-bold text-white"
         >
           Configurar QR
         </Link>
@@ -135,7 +135,7 @@ export default async function AccountPage({
         </section>
       )}
 
-      <section className="rounded-[28px] border border-neutral-200 bg-white p-5 shadow-sm md:p-7">
+      <section className="rounded-[28px] border border-[#102D2A]/10 bg-white p-5 shadow-sm md:p-7">
         <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[24px] bg-[#102D2A] p-6 text-white">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -146,7 +146,7 @@ export default async function AccountPage({
                 <h2 className="mt-3 text-3xl font-black">
                   {business ? `Plan ${planLabel(business.plan)}` : "Sin negocio vinculado"}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-green-50/80">
+                <p className="mt-2 text-sm leading-6 text-white/80">
                   {business
                     ? `${business.name} · ${statusLabel(business.plan_status)}`
                     : "Cuando el superadmin vincule tu cuenta, aqui veras tu plan."}
@@ -182,7 +182,7 @@ export default async function AccountPage({
               </form>
             </div>
 
-            <p className="mt-4 text-xs leading-5 text-green-50/70">
+            <p className="mt-4 text-xs leading-5 text-white/70">
               La cancelacion y el cambio de tarjeta se gestionan desde el portal
               seguro de facturacion. El QR deja de admitir nuevas reseñas si el
               plan queda cancelado.
@@ -190,18 +190,18 @@ export default async function AccountPage({
           </div>
 
           <div className="grid gap-3">
-            <div className="rounded-2xl border border-neutral-200 bg-[#FFF9EA] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-700">
+            <div className="rounded-2xl border border-[#102D2A]/10 bg-[#FFF9EA] p-5">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-[#8A6B3E]">
                 Estado de cobro
               </p>
-              <p className="mt-2 text-lg font-black text-neutral-950">
+              <p className="mt-2 text-lg font-black text-[#102D2A]">
                 {billing.configured
                   ? billing.customerFound
                     ? "Cliente de pago localizado"
                     : "Aun sin primer pago"
                   : "Stripe pendiente"}
               </p>
-              <p className="mt-2 text-sm leading-6 text-neutral-600">
+              <p className="mt-2 text-sm leading-6 text-[#53655E]">
                 {billing.configured
                   ? billing.customerFound
                     ? "Ya podemos mostrar facturas y abrir el portal de gestion."
@@ -210,14 +210,14 @@ export default async function AccountPage({
               </p>
             </div>
 
-            <div className="rounded-2xl border border-neutral-200 bg-green-50 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.14em] text-green-700">
+            <div className="rounded-2xl border border-[#102D2A]/10 bg-[#DDF6DF] p-5">
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-[#27765B]">
                 Negocio
               </p>
-              <p className="mt-2 text-lg font-black text-neutral-950">
+              <p className="mt-2 text-lg font-black text-[#102D2A]">
                 {business?.name ?? "Sin negocio asignado"}
               </p>
-              <p className="mt-2 text-sm leading-6 text-neutral-600">
+              <p className="mt-2 text-sm leading-6 text-[#53655E]">
                 {business
                   ? `QR publico: /r/${business.slug}`
                   : "El superadmin puede crear el negocio y vincularlo a este email."}
@@ -229,13 +229,13 @@ export default async function AccountPage({
         <div className="mt-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-black text-neutral-950">Facturas</h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <h2 className="text-xl font-black text-[#102D2A]">Facturas</h2>
+              <p className="mt-1 text-sm text-[#53655E]">
                 Descarga justificantes de pago para contabilidad.
               </p>
             </div>
             {billing.customerId && (
-              <span className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-600">
+              <span className="rounded-full bg-[#FFF9EA] px-3 py-1 text-xs font-semibold text-[#53655E]">
                 Cliente Stripe {billing.customerId}
               </span>
             )}
@@ -248,9 +248,9 @@ export default async function AccountPage({
           )}
 
           {billing.invoices.length > 0 ? (
-            <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200">
+            <div className="mt-4 overflow-hidden rounded-2xl border border-[#102D2A]/10">
               <table className="w-full text-left text-sm">
-                <thead className="bg-neutral-50 text-xs uppercase tracking-[0.12em] text-neutral-500">
+                <thead className="bg-[#FFF9EA] text-xs uppercase tracking-[0.12em] text-[#53655E]">
                   <tr>
                     <th className="px-4 py-3">Factura</th>
                     <th className="px-4 py-3">Fecha</th>
@@ -259,38 +259,38 @@ export default async function AccountPage({
                     <th className="px-4 py-3 text-right">Descarga</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-200 bg-white">
+                <tbody className="divide-y divide-[#102D2A]/10 bg-white">
                   {billing.invoices.map((invoice) => (
                     <tr key={invoice.id}>
-                      <td className="px-4 py-3 font-semibold text-neutral-950">
+                      <td className="px-4 py-3 font-semibold text-[#102D2A]">
                         {invoice.number ?? invoice.id}
                       </td>
-                      <td className="px-4 py-3 text-neutral-600">
+                      <td className="px-4 py-3 text-[#53655E]">
                         {formatDate(invoice.created)}
                       </td>
-                      <td className="px-4 py-3 text-neutral-600">
+                      <td className="px-4 py-3 text-[#53655E]">
                         {formatInvoiceAmount(invoice.amountDue, invoice.currency)}
                       </td>
-                      <td className="px-4 py-3 text-neutral-600">
+                      <td className="px-4 py-3 text-[#53655E]">
                         {invoice.status ?? "Sin estado"}
                       </td>
                       <td className="px-4 py-3 text-right">
                         {invoice.invoicePdf ? (
                           <a
                             href={invoice.invoicePdf}
-                            className="font-bold text-green-700 underline"
+                            className="font-bold text-[#27765B] underline"
                           >
                             PDF
                           </a>
                         ) : invoice.hostedInvoiceUrl ? (
                           <a
                             href={invoice.hostedInvoiceUrl}
-                            className="font-bold text-green-700 underline"
+                            className="font-bold text-[#27765B] underline"
                           >
                             Ver
                           </a>
                         ) : (
-                          <span className="text-neutral-400">No disponible</span>
+                          <span className="text-[#8A6B3E]">No disponible</span>
                         )}
                       </td>
                     </tr>
@@ -299,7 +299,7 @@ export default async function AccountPage({
               </table>
             </div>
           ) : (
-            <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-6 text-sm leading-6 text-neutral-600">
+            <div className="mt-4 rounded-2xl border border-dashed border-[#102D2A]/15 bg-[#FFF9EA] p-6 text-sm leading-6 text-[#53655E]">
               Aun no hay facturas para esta cuenta. Cuando el cliente pague la
               primera mensualidad, apareceran aqui sus descargas.
             </div>
@@ -314,33 +314,33 @@ export default async function AccountPage({
         </div>
 
         <aside className="space-y-5">
-          <section className="rounded-2xl border bg-white p-6">
-            <h2 className="text-lg font-semibold text-neutral-900">Tu sesion</h2>
+          <section className="rounded-2xl border border-[#102D2A]/10 bg-white p-6">
+            <h2 className="text-lg font-semibold text-[#102D2A]">Tu sesion</h2>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
-                <dt className="text-neutral-400">Email</dt>
-                <dd className="font-medium text-neutral-900">{email || "Sin email"}</dd>
+                <dt className="text-[#8A6B3E]">Email</dt>
+                <dd className="font-medium text-[#102D2A]">{email || "Sin email"}</dd>
               </div>
               <div>
-                <dt className="text-neutral-400">ID usuario</dt>
-                <dd className="break-all font-mono text-xs text-neutral-700">
+                <dt className="text-[#8A6B3E]">ID usuario</dt>
+                <dd className="break-all font-mono text-xs text-[#53655E]">
                   {user?.id ?? "Sin sesion"}
                 </dd>
               </div>
             </dl>
           </section>
 
-          <section className="rounded-2xl border bg-green-50 p-6">
-            <h2 className="text-lg font-semibold text-green-950">
+          <section className="rounded-2xl border border-[#102D2A]/10 bg-[#DDF6DF] p-6">
+            <h2 className="text-lg font-semibold text-[#102D2A]">
               Datos del comercio
             </h2>
-            <p className="mt-2 text-sm text-green-900">
+            <p className="mt-2 text-sm text-[#27765B]">
               Logo, colores, WhatsApp, email del dueño, enlace de Google y
               mensajes del QR se editan desde el panel de experiencia.
             </p>
             <Link
               href="/admin/experience"
-              className="mt-4 inline-block rounded-lg bg-green-900 px-4 py-2 text-sm font-semibold text-white"
+              className="mt-4 inline-block rounded-lg bg-[#102D2A] px-4 py-2 text-sm font-semibold text-white"
             >
               Configurar mi QR
             </Link>
