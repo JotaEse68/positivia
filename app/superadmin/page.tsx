@@ -195,7 +195,7 @@ export default async function SuperadminPage() {
                 </p>
               </div>
               <a
-                href="https://positivia.vercel.app/"
+                href={process.env.NEXT_PUBLIC_SITE_URL ?? "https://app.positivia.net"}
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-lg bg-white px-4 py-2 text-sm font-black text-[#203126] shadow-sm"

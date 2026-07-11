@@ -145,7 +145,7 @@ export default async function ExperiencePage({
     banner_url: selected.banner_url ?? (await getStoredBannerUrl(db, selected.slug)),
   };
   const headersList = await headers();
-  const host = headersList.get("host") ?? "positivia.vercel.app";
+  const host = headersList.get("host") ?? "app.positivia.net";
   const proto = headersList.get("x-forwarded-proto") ?? "https";
   const qrUrl = `${proto}://${host}/r/${selected.slug}`;
 
