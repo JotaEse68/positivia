@@ -8,15 +8,15 @@ type Props = {
 export default function AdminStatsCard({ label, value, hint, accent = "neutral" }: Props) {
   const color =
     accent === "green"
-      ? "text-green-600"
+      ? "text-[#27765B]"
       : accent === "red"
-        ? "text-red-600"
-        : "text-neutral-900";
+        ? "text-[#EF735C]"
+        : "text-[#102D2A]";
   return (
-    <div className="rounded-2xl border bg-white p-5">
-      <p className="text-sm text-neutral-500">{label}</p>
+    <div className="rounded-2xl border border-[#102D2A]/10 bg-white p-5">
+      <p className="text-sm text-[#53655E]">{label}</p>
       <p className={`mt-1 text-3xl font-bold ${color}`}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-neutral-400">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-[#8A6B3E]">{hint}</p>}
     </div>
   );
 }

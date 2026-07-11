@@ -72,7 +72,7 @@ export default function ComplaintForm({ slug, rating, googleReviewLink, copy }: 
         {googleReviewLink && (
           <a
             href={googleReviewLink}
-            className="mt-4 inline-flex rounded-3xl border border-[#24A66D]/25 bg-white px-4 py-2 text-sm font-black text-[#1F7A4E]"
+            className="mt-4 inline-block text-xs font-medium text-[#337257] underline underline-offset-2"
           >
             También puedes publicar en Google
           </a>

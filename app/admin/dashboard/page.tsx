@@ -66,13 +66,13 @@ export default async function DashboardPage({
   if (list.length === 0) {
     return (
       <main className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-neutral-900">Aún no tienes negocios</h1>
-        <p className="mt-2 text-neutral-500">
+        <h1 className="text-2xl font-bold text-[#102D2A]">Aún no tienes negocios</h1>
+        <p className="mt-2 text-[#53655E]">
           Tu cuenta todavía no está vinculada a ningún negocio. Si te acaban de
           invitar, revisa que hayas entrado con el mismo email configurado en tu
           ficha de cliente.
         </p>
-        <Link href="/demo/dashboard" className="mt-5 inline-block text-green-600 underline">
+        <Link href="/demo/dashboard" className="mt-5 inline-block text-[#27765B] underline">
           Ver demo del panel
         </Link>
       </main>
@@ -132,22 +132,27 @@ export default async function DashboardPage({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           {isSuperadmin && (
-            <Link href="/superadmin" className="text-xs font-bold uppercase tracking-[0.14em] text-green-700">
+            <Link href="/superadmin" className="text-xs font-bold uppercase tracking-[0.14em] text-[#27765B]">
               Superadmin
             </Link>
           )}
-          <h1 className="text-2xl font-bold text-neutral-900">{selected.name}</h1>
+          <h1
+            className="text-2xl font-bold text-[#102D2A]"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {selected.name}
+          </h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/admin/experience?b=${selected.id}`}
-            className="rounded-lg bg-neutral-950 px-3 py-1.5 text-sm font-semibold text-white"
+            className="rounded-lg bg-[#102D2A] px-3 py-1.5 text-sm font-semibold text-white"
           >
             Configurar QR
           </Link>
           <span
             className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              isPro ? "bg-green-100 text-green-700" : "bg-neutral-200 text-neutral-600"
+              isPro ? "bg-[#DDF6DF] text-[#27765B]" : "bg-[#102D2A]/10 text-[#53655E]"
             }`}
           >
             Plan {isPro ? "Pro" : "Starter"}
@@ -164,8 +169,8 @@ export default async function DashboardPage({
               href={`/admin/dashboard?b=${b.id}`}
               className={`rounded-full border px-3 py-1.5 text-sm ${
                 b.id === selected.id
-                  ? "border-green-500 bg-green-50 text-green-700"
-                  : "bg-white text-neutral-600 hover:bg-neutral-50"
+                  ? "border-[#27765B] bg-[#DDF6DF] text-[#27765B]"
+                  : "border-[#102D2A]/10 bg-white text-[#53655E] hover:bg-[#FFF9EA]"
               }`}
             >
               {b.name}
@@ -198,23 +203,23 @@ export default async function DashboardPage({
       {/* Resúmenes semanales (Pro) */}
       {isPro && summaries && summaries.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-lg font-semibold text-neutral-900">Resúmenes semanales</h2>
+          <h2 className="text-lg font-semibold text-[#102D2A]">Resúmenes semanales</h2>
           <div className="mt-3 space-y-3">
             {summaries.map((s) => (
-              <div key={s.id} className="rounded-2xl border bg-white p-5">
+              <div key={s.id} className="rounded-2xl border border-[#102D2A]/10 bg-white p-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-neutral-500">
+                  <p className="text-sm font-medium text-[#53655E]">
                     {new Date(s.week_start).toLocaleDateString("es-ES")} –{" "}
                     {new Date(s.week_end).toLocaleDateString("es-ES")}
                   </p>
                   {s.top_theme && (
-                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+                    <span className="rounded-full bg-[#F6C64E]/20 px-2.5 py-1 text-xs font-medium text-[#8A6B3E]">
                       {s.top_theme}
                     </span>
                   )}
                 </div>
-                <p className="mt-2 text-neutral-800">{s.summary_text}</p>
-                <p className="mt-2 text-xs text-neutral-400">
+                <p className="mt-2 text-[#243126]">{s.summary_text}</p>
+                <p className="mt-2 text-xs text-[#8A6B3E]">
                   {s.positive_count} positivas · {s.negative_count} quejas
                 </p>
               </div>
@@ -225,10 +230,10 @@ export default async function DashboardPage({
 
       {/* Quejas */}
       <section className="mt-10">
-        <h2 className="text-lg font-semibold text-neutral-900">
+        <h2 className="text-lg font-semibold text-[#102D2A]">
           Quejas privadas ({complaints.length})
         </h2>
-        <p className="mb-3 text-sm text-neutral-500">
+        <p className="mb-3 text-sm text-[#53655E]">
           Feedback que interceptaste antes de que llegara a Google.
         </p>
         <ComplaintList complaints={complaints} isPro={isPro} />
