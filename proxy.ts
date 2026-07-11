@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const protectedMatchers = [
   /^\/admin\/dashboard/,
   /^\/admin\/account/,
+  /^\/admin\/onboarding/,
   /^\/superadmin/,
   /^\/api\/superadmin/,
   /^\/api\/complaint/,

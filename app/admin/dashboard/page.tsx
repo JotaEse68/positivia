@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isSuperadminUser } from "@/lib/superadmin";
@@ -10,9 +11,10 @@ export const dynamic = "force-dynamic";
 type Business = {
   id: string;
   name: string;
-  slug: string;
+  slug: string | null;
   plan: "starter" | "pro";
   parent_business_id: string | null;
+  google_review_link: string | null;
 };
 
 async function linkBusinessesForCurrentUser(user: { id: string; email?: string | null }) {
@@ -56,7 +58,7 @@ export default async function DashboardPage({
   // Negocios accesibles (RLS: los del dueño + sus locales hijos).
   const { data: businesses } = await db
     .from("businesses")
-    .select("id, name, slug, plan, parent_business_id")
+    .select("id, name, slug, plan, parent_business_id, google_review_link")
     .order("created_at", { ascending: true });
 
   const list = (businesses ?? []) as Business[];
@@ -79,6 +81,11 @@ export default async function DashboardPage({
 
   const selected =
     list.find((b) => b.id === query.b) ?? list[0];
+
+  if (!isSuperadmin && (!selected.slug || !selected.google_review_link)) {
+    redirect("/admin/onboarding");
+  }
+
   const isPro = selected.plan === "pro";
 
   // Feedback del negocio seleccionado (RLS-scoped).

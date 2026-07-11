@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 import { isSuperadminUser } from "@/lib/superadmin";
 
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const RATING_SETTING_FIELDS = [
   "visual_theme",
   "logo_display",
@@ -170,6 +171,26 @@ export async function PATCH(req: NextRequest) {
       email_owner: String(form.get("email_owner") ?? "").trim() || null,
     };
     if (color) update.color_primary = color;
+
+    const slugField = form.get("slug");
+    if (typeof slugField === "string" && slugField.trim()) {
+      const slug = slugField.trim().toLowerCase();
+      if (!SLUG_RE.test(slug)) {
+        return NextResponse.json({ error: "Slug inválido" }, { status: 400 });
+      }
+      if (slug !== business.slug) {
+        const { data: taken } = await admin
+          .from("businesses")
+          .select("id")
+          .eq("slug", slug)
+          .neq("id", businessId)
+          .maybeSingle();
+        if (taken) {
+          return NextResponse.json({ error: "Ese slug ya está en uso" }, { status: 409 });
+        }
+        update.slug = slug;
+      }
+    }
     if (form.get("remove_logo") === "1") update.logo_url = null;
     if (form.get("remove_banner") === "1") {
       update.banner_url = null;
