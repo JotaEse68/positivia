@@ -243,6 +243,11 @@ export default async function RatingPage({ params }: Props) {
             <p className="mt-5 text-center text-xs font-medium text-[#A37A48]">
               {copy.appreciation_note}
             </p>
+            <p className="mt-2 text-center text-[11px] text-[#C7AE87]">
+              <a href="/legal/privacidad" className="underline">
+                Política de privacidad
+              </a>
+            </p>
           </div>
         </section>
       </div>

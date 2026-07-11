@@ -150,6 +150,18 @@ export default function ComplaintForm({ slug, rating, googleReviewLink, copy }: 
           No hemos podido enviarlo. Prueba otra vez en un momento.
         </p>
       )}
+      <p className="mt-3 text-center text-xs text-[#9A8368]">
+        Al enviar aceptas nuestra{" "}
+        <a
+          href="/legal/privacidad"
+          target="_blank"
+          rel="noreferrer"
+          className="underline"
+        >
+          Política de privacidad
+        </a>
+        .
+      </p>
     </form>
   );
 }
