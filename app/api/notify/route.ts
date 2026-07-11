@@ -4,14 +4,21 @@ import { sendWhatsApp } from "@/lib/whatsapp";
 import { sendEmail } from "@/lib/email";
 import { escapeHtml } from "@/lib/html";
 import { recordNotificationEvent } from "@/lib/notification-events";
+import { isAuthorizedCronRequest } from "@/lib/cron";
 
 // Recibe un feedbackId (lo dispara /api/feedback tras una queja negativa) y
 // alerta al dueño: WhatsApp si está configurado y hay número, si no email.
 // En plan Pro, dispara /api/ai-classify de forma async para adjuntar la
 // urgencia estimada (la ruta se implementa en FASE 4; el dispatch es
-// tolerante a fallos para no bloquear la notificación).
+// tolerante a fallos para no bloquear la notificación). Solo la llama
+// /api/feedback servidor-a-servidor, así que se protege con el mismo
+// secreto que las crons.
 export async function POST(req: NextRequest) {
   try {
+    if (!isAuthorizedCronRequest(req)) {
+      return NextResponse.json({ error: "no_autorizado" }, { status: 401 });
+    }
+
     const body = await req.json().catch(() => null);
     const feedbackId = typeof body?.feedbackId === "string" ? body.feedbackId : null;
     if (!feedbackId) {
@@ -85,9 +92,13 @@ export async function POST(req: NextRequest) {
     // Clasificación de urgencia por IA (solo Pro), fire-and-forget.
     if (business.plan === "pro") {
       try {
+        const secret = process.env.CRON_SECRET;
         void fetch(`${req.nextUrl.origin}/api/ai-classify`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+          },
           body: JSON.stringify({ feedbackId: feedback.id }),
         }).catch(() => {});
       } catch {

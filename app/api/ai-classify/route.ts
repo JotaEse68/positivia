@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { anthropicConfigured, classifyComplaint } from "@/lib/anthropic";
+import { isAuthorizedCronRequest } from "@/lib/cron";
 
 // Clasifica la urgencia de una queja (solo plan Pro) y guarda ai_urgency +
-// ai_summary_theme. La dispara /api/notify de forma async.
+// ai_summary_theme. Solo la dispara /api/notify servidor-a-servidor (nunca
+// el navegador), así que se protege con el mismo secreto que las crons.
 export async function POST(req: NextRequest) {
   try {
+    if (!isAuthorizedCronRequest(req)) {
+      return NextResponse.json({ error: "no_autorizado" }, { status: 401 });
+    }
+
     const body = await req.json().catch(() => null);
     const feedbackId = typeof body?.feedbackId === "string" ? body.feedbackId : null;
     if (!feedbackId) {

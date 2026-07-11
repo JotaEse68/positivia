@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripePriceForPlan, getStripeSecretForRequests } from "@/lib/stripe-billing";
+import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,13 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+  if (isRateLimited(`stripe-checkout:${getClientIp(req)}`, 10, 10 * 60_000)) {
+    return NextResponse.json(
+      { error: "demasiadas_peticiones" },
+      { status: 429, headers: corsHeaders() }
+    );
+  }
+
   let body: { plan?: string };
   try {
     body = await req.json();
