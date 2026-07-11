@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { isSuperadminUser } from "@/lib/superadmin";
+import { getAccessibleBusinessIds } from "@/lib/business-access";
 
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -82,48 +83,6 @@ async function saveRatingSettingsSnapshot(
       contentType: "application/json",
       upsert: true,
     });
-}
-
-async function getAccessibleBusinessIds(user: { id: string; email?: string | null }) {
-  const admin = supabaseAdmin();
-  const email = user.email?.trim();
-
-  if (email) {
-    const { data: matches } = await admin
-      .from("businesses")
-      .select("id")
-      .ilike("email_owner", email);
-
-    if (matches?.length) {
-      await admin.from("admin_users").upsert(
-        matches.map((business) => ({
-          business_id: business.id,
-          clerk_user_id: user.id,
-          role: "owner",
-        })),
-        { onConflict: "business_id,clerk_user_id" }
-      );
-    }
-  }
-
-  const { data: links } = await admin
-    .from("admin_users")
-    .select("business_id")
-    .eq("clerk_user_id", user.id);
-
-  const directIds = (links ?? []).map((link) => link.business_id as string);
-  const ids = new Set(directIds);
-
-  if (directIds.length) {
-    const { data: children } = await admin
-      .from("businesses")
-      .select("id")
-      .in("parent_business_id", directIds);
-
-    for (const child of children ?? []) ids.add(child.id as string);
-  }
-
-  return ids;
 }
 
 export async function PATCH(req: NextRequest) {

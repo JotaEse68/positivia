@@ -18,6 +18,7 @@ const RATING_SETTING_FIELDS = [
   "private_thanks_body",
   "recovery_hint",
   "appreciation_note",
+  "reward_text",
 ] as const;
 
 function cleanSetting(value: unknown) {
@@ -425,6 +426,9 @@ export async function PATCH(req: NextRequest) {
           form ? form.get("logo_display") : body.rating_settings.logo_display,
           ["large", "compact"]
         ) || "large";
+      settings.reward_enabled = form
+        ? form.get("reward_enabled") === "on"
+        : Boolean(body.rating_settings.reward_enabled);
       await saveRatingSettingsSnapshot(id, settings);
 
       const { error: settingsError } = await admin

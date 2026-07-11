@@ -299,6 +299,24 @@ export default function ClientEditForm({
               className={input}
             />
           </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-600">
+            <input
+              type="checkbox"
+              name="reward_enabled"
+              defaultChecked={ratingSettings.reward_enabled}
+              className="h-4 w-4 rounded border-neutral-300"
+            />
+            Ofrecer recompensa por valorar (solo 4-5★)
+          </label>
+          <label className="text-sm text-neutral-600">
+            Texto de la recompensa
+            <input
+              name="reward_text"
+              defaultValue={ratingSettings.reward_text}
+              placeholder="Café gratis en tu próxima visita · CAFE10"
+              className={input}
+            />
+          </label>
           <label className="text-sm text-neutral-600">
             Opciones de problema
             <textarea
