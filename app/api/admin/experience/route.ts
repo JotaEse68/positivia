@@ -33,19 +33,6 @@ function cleanChoice(value: FormDataEntryValue | null, allowed: string[]) {
   return typeof value === "string" && allowed.includes(value) ? value : null;
 }
 
-function isMissingSettingsSchema(error: { code?: string; message?: string }) {
-  return (
-    error.code === "42P01" ||
-    error.code === "42703" ||
-    error.message?.includes("business_rating_settings") ||
-    error.message?.includes("relation") === true
-  );
-}
-
-function isMissingColumn(error: { code?: string; message?: string }, column: string) {
-  return error.code === "42703" || error.message?.includes(column) === true;
-}
-
 async function uploadBusinessImage({
   file,
   slug,
@@ -69,20 +56,6 @@ async function uploadBusinessImage({
 
   if (error) throw new Error(error.message);
   return admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
-}
-
-async function saveRatingSettingsSnapshot(
-  businessId: string,
-  settings: Record<string, unknown>
-) {
-  const payload = Buffer.from(JSON.stringify(settings), "utf8");
-  await supabaseAdmin()
-    .storage
-    .from("logos")
-    .upload(`rating-settings-${businessId}.json`, payload, {
-      contentType: "application/json",
-      upsert: true,
-    });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -189,27 +162,13 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    let warning: string | null = null;
     const { error: businessError } = await admin
       .from("businesses")
       .update(update)
       .eq("id", businessId);
 
     if (businessError) {
-      if (isMissingColumn(businessError, "banner_url")) {
-        delete update.banner_url;
-        const fallback = await admin
-          .from("businesses")
-          .update(update)
-          .eq("id", businessId);
-        if (!fallback.error) {
-          warning = null;
-        } else {
-          return NextResponse.json({ error: fallback.error.message }, { status: 400 });
-        }
-      } else {
-        return NextResponse.json({ error: businessError.message }, { status: 400 });
-      }
+      return NextResponse.json({ error: businessError.message }, { status: 400 });
     }
 
     const settings: Record<string, unknown> = { business_id: businessId };
@@ -221,23 +180,19 @@ export async function PATCH(req: NextRequest) {
     settings.logo_display =
       cleanChoice(form.get("logo_display"), ["large", "compact"]) || "large";
     settings.reward_enabled = form.get("reward_enabled") === "on";
-    await saveRatingSettingsSnapshot(businessId, settings);
 
     const { error: settingsError } = await admin
       .from("business_rating_settings")
       .upsert(settings, { onConflict: "business_id" });
 
     if (settingsError) {
-      if (isMissingSettingsSchema(settingsError)) {
-        return NextResponse.json({ ok: true, ...(warning ? { warning } : {}) });
-      }
       return NextResponse.json(
         { error: "Datos guardados, pero no se pudo guardar la experiencia QR." },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ ok: true, ...(warning ? { warning } : {}) });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[admin/experience PATCH] error:", err);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });

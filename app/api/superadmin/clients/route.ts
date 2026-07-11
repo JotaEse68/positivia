@@ -31,14 +31,6 @@ function cleanChoice(value: unknown, allowed: string[]) {
   return typeof value === "string" && allowed.includes(value) ? value : null;
 }
 
-function isMissingSettingsTable(error: { code?: string; message?: string }) {
-  return (
-    error.code === "42P01" ||
-    error.message?.includes("business_rating_settings") ||
-    error.message?.includes("relation") === true
-  );
-}
-
 async function findAuthUserByEmail(email: string) {
   const admin = supabaseAdmin();
   const needle = email.trim().toLowerCase();
@@ -111,10 +103,6 @@ async function ensureOwnerUser({
   return { userId: data.user.id, existed: Boolean(existing) };
 }
 
-function isMissingColumn(error: { code?: string; message?: string }, column: string) {
-  return error.code === "42703" || error.message?.includes(column) === true;
-}
-
 async function uploadBusinessImage({
   file,
   slug,
@@ -138,20 +126,6 @@ async function uploadBusinessImage({
 
   if (error) throw new Error(error.message);
   return admin.storage.from("logos").getPublicUrl(path).data.publicUrl;
-}
-
-async function saveRatingSettingsSnapshot(
-  businessId: string,
-  settings: Record<string, unknown>
-) {
-  const payload = Buffer.from(JSON.stringify(settings), "utf8");
-  await supabaseAdmin()
-    .storage
-    .from("logos")
-    .upload(`rating-settings-${businessId}.json`, payload, {
-      contentType: "application/json",
-      upsert: true,
-    });
 }
 
 // Alta de un cliente (negocio). Solo superadmin. Sube el logo a Storage y crea
@@ -380,29 +354,15 @@ export async function PATCH(req: NextRequest) {
     }
 
     const admin = supabaseAdmin();
-    let warning: string | null = null;
     const { error } = await admin
       .from("businesses")
       .update(update)
       .eq("id", id);
     if (error) {
-      if (isMissingColumn(error, "banner_url")) {
-        delete update.banner_url;
-        const fallback = await admin
-          .from("businesses")
-          .update(update)
-          .eq("id", id);
-        if (!fallback.error) {
-          warning = null;
-        } else {
-          return NextResponse.json({ error: fallback.error.message }, { status: 400 });
-        }
-      } else {
-        const msg = error.message.includes("duplicate")
-          ? "Ese slug ya está en uso"
-          : error.message;
-        return NextResponse.json({ error: msg }, { status: 400 });
-      }
+      const msg = error.message.includes("duplicate")
+        ? "Ese slug ya está en uso"
+        : error.message;
+      return NextResponse.json({ error: msg }, { status: 400 });
     }
 
     const hasRatingSettings =
@@ -429,21 +389,12 @@ export async function PATCH(req: NextRequest) {
       settings.reward_enabled = form
         ? form.get("reward_enabled") === "on"
         : Boolean(body.rating_settings.reward_enabled);
-      await saveRatingSettingsSnapshot(id, settings);
 
       const { error: settingsError } = await admin
         .from("business_rating_settings")
         .upsert(settings, { onConflict: "business_id" });
 
       if (settingsError) {
-        if (isMissingSettingsTable(settingsError)) {
-          return NextResponse.json({
-            ok: true,
-            slug: update.slug ?? null,
-            ...(warning ? { warning } : {}),
-          });
-        }
-
         return NextResponse.json(
           { error: "Cambios guardados, pero no se pudieron guardar los mensajes QR." },
           { status: 400 }
@@ -454,7 +405,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       slug: update.slug ?? null,
-      ...(warning ? { warning } : {}),
     });
   } catch (err) {
     console.error("[superadmin/clients PATCH] error:", err);

@@ -46,33 +46,6 @@ export async function POST(req: NextRequest) {
       .select("id")
       .single();
 
-    if (insertError && insertError.code === "42703") {
-      const fallback = await admin
-        .from("feedback")
-        .insert({
-          business_id: business.id,
-          rating: 2,
-          comment:
-            "[Prueba interna] Este aviso confirma que el encargado recibe una queja privada.",
-          status: "private_captured",
-        })
-        .select("id")
-        .single();
-      if (fallback.error || !fallback.data) {
-        return NextResponse.json(
-          { error: fallback.error?.message ?? "No se pudo crear la prueba" },
-          { status: 400 }
-        );
-      }
-      const notify = await fetch(`${req.nextUrl.origin}/api/notify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ feedbackId: fallback.data.id }),
-      });
-      const result = await notify.json().catch(() => ({}));
-      return NextResponse.json({ ok: notify.ok, feedbackId: fallback.data.id, ...result });
-    }
-
     if (insertError || !feedback) {
       return NextResponse.json(
         { error: insertError?.message ?? "No se pudo crear la prueba" },
@@ -80,9 +53,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const secret = process.env.CRON_SECRET;
     const notify = await fetch(`${req.nextUrl.origin}/api/notify`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(secret ? { Authorization: `Bearer ${secret}` } : {}),
+      },
       body: JSON.stringify({ feedbackId: feedback.id }),
     });
     const result = await notify.json().catch(() => ({}));

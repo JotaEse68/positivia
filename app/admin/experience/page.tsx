@@ -26,48 +26,16 @@ type Business = {
 type SupabaseClientLike = Awaited<ReturnType<typeof createServerSupabase>> | ReturnType<typeof supabaseAdmin>;
 
 async function getRatingSettings(supabase: SupabaseClientLike, businessId: string) {
-  async function getStoredCopy() {
-    const { data } = await supabase.storage
-      .from("logos")
-      .download(`rating-settings-${businessId}.json`);
-    if (!data) return null;
-    try {
-      return JSON.parse(await data.text());
-    } catch {
-      return null;
-    }
-  }
-
   const fields =
-    "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
-  const fallbackFields =
-    "visual_theme, logo_display, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note";
+    "visual_theme, logo_display, incentive_text, issue_options, positive_redirect_title, positive_redirect_body, private_prompt_title, private_prompt_body, private_submit_label, private_thanks_title, private_thanks_body, recovery_hint, appreciation_note, reward_enabled, reward_text";
 
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("business_rating_settings")
     .select(fields)
     .eq("business_id", businessId)
     .maybeSingle();
 
-  if (!error) return normalizeRatingCopy(data ?? (await getStoredCopy()));
-  if (error.code !== "42703") return normalizeRatingCopy(await getStoredCopy());
-
-  const fallback = await supabase
-    .from("business_rating_settings")
-    .select(fallbackFields)
-    .eq("business_id", businessId)
-    .maybeSingle();
-
-  return normalizeRatingCopy(fallback.data ?? (await getStoredCopy()));
-}
-
-async function getStoredBannerUrl(supabase: SupabaseClientLike, slug: string) {
-  const { data, error } = await supabase.storage
-    .from("logos")
-    .list("", { search: `banner-${slug}`, limit: 1 });
-
-  if (error || !data?.some((item) => item.name === `banner-${slug}`)) return null;
-  return supabase.storage.from("logos").getPublicUrl(`banner-${slug}`).data.publicUrl;
+  return normalizeRatingCopy(data);
 }
 
 export default async function ExperiencePage({
@@ -88,22 +56,12 @@ export default async function ExperiencePage({
 
   const businessFields =
     "id, name, slug, plan, parent_business_id, logo_url, banner_url, color_primary, google_review_link, whatsapp_owner, email_owner";
-  const fallbackBusinessFields =
-    "id, name, slug, plan, parent_business_id, logo_url, color_primary, google_review_link, whatsapp_owner, email_owner";
-  const { data: businesses, error: businessesError } = await db
+  const { data: businesses } = await db
     .from("businesses")
     .select(businessFields)
     .order("created_at", { ascending: true });
 
-  const fallbackBusinesses =
-    businessesError?.code === "42703"
-      ? await db
-          .from("businesses")
-          .select(fallbackBusinessFields)
-          .order("created_at", { ascending: true })
-      : null;
-
-  const list = ((businesses ?? fallbackBusinesses?.data) ?? []) as Business[];
+  const list = (businesses ?? []) as Business[];
 
   if (list.length === 0) {
     return (
@@ -119,10 +77,6 @@ export default async function ExperiencePage({
 
   const selected = list.find((business) => business.id === query.b) ?? list[0];
   const ratingSettings = await getRatingSettings(db, selected.id);
-  const selectedWithStoredBanner = {
-    ...selected,
-    banner_url: selected.banner_url ?? (await getStoredBannerUrl(db, selected.slug)),
-  };
   const headersList = await headers();
   const host = headersList.get("host") ?? "app.positivia.net";
   const proto = headersList.get("x-forwarded-proto") ?? "https";
@@ -178,7 +132,7 @@ export default async function ExperiencePage({
       )}
 
       <BusinessExperienceForm
-        business={selectedWithStoredBanner}
+        business={selected}
         ratingSettings={ratingSettings}
         qrUrl={qrUrl}
       />

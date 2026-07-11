@@ -13,14 +13,6 @@ function cleanIssueCategories(value: unknown) {
     .slice(0, 5);
 }
 
-function isMissingFeedbackResolutionColumns(error: { message?: string; code?: string }) {
-  return (
-    error.code === "42703" ||
-    error.message?.includes("issue_categories") ||
-    error.message?.includes("contact_info")
-  );
-}
-
 // navigator.sendBeacon envía el body como texto plano (Content-Type:
 // text/plain), no como JSON: leemos el texto crudo y lo parseamos
 // nosotros mismos en vez de depender de la cabecera.
@@ -89,27 +81,11 @@ export async function POST(req: NextRequest) {
       contact_info: contactInfo,
     };
 
-    let { data: feedback, error: insertError } = await supabase
+    const { data: feedback, error: insertError } = await supabase
       .from("feedback")
       .insert(insertPayload)
       .select("id")
       .single();
-
-    if (insertError && isMissingFeedbackResolutionColumns(insertError)) {
-      const fallbackPayload = {
-        business_id: business.id,
-        rating,
-        comment,
-        status: isPositive ? "public_redirected" : "private_captured",
-      };
-      const fallback = await supabase
-        .from("feedback")
-        .insert(fallbackPayload)
-        .select("id")
-        .single();
-      feedback = fallback.data;
-      insertError = fallback.error;
-    }
 
     if (insertError) {
       console.error("[feedback] insert error:", insertError.message);

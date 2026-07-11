@@ -17,7 +17,9 @@ create type admin_role_type as enum ('owner', 'staff');
 -- se agrupan bajo un Pro base vía parent_business_id.
 create table businesses (
   id uuid primary key default gen_random_uuid(),
-  slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  -- Nullable: la provisión automática vía Stripe crea el negocio sin slug;
+  -- el dueño lo reclama en el asistente de onboarding.
+  slug text unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   name text not null,
   logo_url text,
   banner_url text,
@@ -28,12 +30,17 @@ create table businesses (
   plan plan_type not null default 'starter',
   plan_status plan_status_type not null default 'trial',
   parent_business_id uuid references businesses(id) on delete set null,
+  stripe_customer_id text,
+  stripe_subscription_id text,
   created_at timestamptz not null default now()
 );
 
 create index idx_businesses_slug on businesses (slug);
+create unique index idx_businesses_slug_unique on businesses (slug);
 create index idx_businesses_parent on businesses (parent_business_id)
   where parent_business_id is not null;
+create unique index idx_businesses_stripe_subscription
+  on businesses (stripe_subscription_id);
 
 -- ---------- business_rating_settings ----------
 -- Textos configurables de la experiencia QR. Son públicos porque se renderizan
@@ -55,6 +62,8 @@ create table business_rating_settings (
   private_thanks_body text,
   recovery_hint text,
   appreciation_note text,
+  reward_enabled boolean not null default false,
+  reward_text text,
   updated_at timestamptz not null default now()
 );
 
@@ -228,3 +237,23 @@ drop policy if exists "public read logos" on storage.objects;
 create policy "public read logos" on storage.objects
   for select to anon, authenticated
   using (bucket_id = 'logos');
+
+-- ============================================================
+-- RLS solo filtra filas, no columnas: el rol "anon" tendría por defecto
+-- SELECT sobre toda la tabla businesses. Se restringe a las columnas que
+-- la landing pública (/r/[slug]) necesita, para que email_owner,
+-- whatsapp_owner, stripe_customer_id y stripe_subscription_id no sean
+-- accesibles vía la anon key aunque alguien llame directo a la API REST.
+-- ============================================================
+revoke select on businesses from anon;
+
+grant select (
+  id,
+  slug,
+  name,
+  logo_url,
+  banner_url,
+  color_primary,
+  google_review_link,
+  plan_status
+) on businesses to anon;
